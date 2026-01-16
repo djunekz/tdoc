@@ -1,0 +1,108 @@
+#!/data/data/com.termux/files/usr/bin/bash
+#
+# TDOC — Termux Doctor
+#
+# Copyright (c) 2026 TDOC Contributors
+# Licensed under the MIT License.
+# You may obtain a copy of the License at:
+# https://opensource.org/licenses/MIT
+#
+#
+export TDOC_ROOT="$PREFIX/lib/tdoc"
+
+# Init
+source "$TDOC_ROOT/core/init.sh"
+
+case "$1" in
+
+  version|-v|--version)
+    tdoc_version_string
+    ;;
+
+  fix)
+    source "$TDOC_ROOT/core/scan.sh"
+    case "$2" in
+      --preview)
+        source "$TDOC_ROOT/core/fix_preview.sh"
+        ;;
+      --auto)
+        source "$TDOC_ROOT/core/fix_auto.sh"
+        ;;
+      *)
+        source "$TDOC_ROOT/core/fix.sh"
+        ;;
+    esac
+    ;;
+
+  doctor)
+    case "$2" in
+      --json)
+        source "$TDOC_ROOT/core/scan.sh" >/dev/null 2>&1
+        source "$TDOC_ROOT/core/doctor_json.sh"
+        ;;
+      *)
+        echo "Usage:"
+        echo "  tdoc doctor --json"
+        ;;
+    esac
+    ;;
+
+  explain)
+    source "$TDOC_ROOT/core/scan.sh"
+    source "$TDOC_ROOT/core/explain.sh"
+    ;;
+
+  report)
+    source "$TDOC_ROOT/core/scan.sh"
+    cat "$TDOC_ROOT/data/state.env"
+    ;;
+
+  ""|status)
+    source "$TDOC_ROOT/core/scan.sh"
+    source "$TDOC_ROOT/core/status.sh"
+    ;;
+
+  update)
+    source "$TDOC_ROOT/core/update.sh" "$2"
+    ;;
+
+  security)
+    case "$2" in
+      --json)
+        source "$TDOC_ROOT/core/repo_security_json.sh"
+        ;;
+      *)
+        source "$TDOC_ROOT/core/repo_security_ui.sh"
+        ;;
+    esac
+    ;;
+
+  help|-h|--help)
+    echo "Termux Doctor"
+    echo "Version: v$TDOC_VERSION ($TDOC_BUILD)"
+    echo
+    echo "Usage:"
+    echo ""
+    echo "  tdoc status"
+    echo "  tdoc version"
+    echo "  tdoc explain"
+    echo "  tdoc fix"
+    echo "  tdoc fix --preview"
+    echo "  tdoc fix --auto"
+    echo "  tdoc report"
+    echo "  tdoc doctor --json"
+    echo "  tdoc security"
+    echo "  tdoc security --json"
+    echo "  tdoc update"
+    echo "  tdoc update --check"
+    echo "  tdoc update patch|minor|major|"
+    echo "  tdoc help"
+    ;;
+
+  *)
+    echo "❌ Unknown command: tdoc $1"
+    echo
+    echo "Run: tdoc help"
+    exit 1
+    ;;
+esac
