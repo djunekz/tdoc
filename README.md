@@ -71,18 +71,18 @@ mv tdoc $PREFIX/bin/
 
 ## Commands Overview
 
-- tdoc / tdoc = status
-- Show current = system status
-- tdoc explain = Detailed explanation of broken items
-- tdoc fix = Run manual fix wizard
-- tdoc fix --auto = Run automatic fix process
-- tdoc report = Show raw system state report
-- tdoc update = Update TDOC from GitHub Release
-- tdoc update --check = Check latest version only
-- tdoc doctor --json = JSON output for integrations
-- tdoc security = Repository security check
-- tdoc security --json = JSON security output
-- tdoc help = Show usage info
+- `tdoc status` = Show current system status
+- `tdoc explain` = Detailed explanation of broken items
+- `tdoc fix` = Run manual fix wizard
+- `tdoc fix --auto` = Run automatic fix process
+- `tdoc report` = Show raw system state report
+- `tdoc update` = Update TDOC from GitHub Release
+- `tdoc update --check` = Check latest version only
+- `tdoc doctor --json` = JSON output for integrations
+- `tdoc security` = Repository security check
+- `tdoc security --json` = JSON security output
+- `tdoc help` = Show usage info
+- `tdoc version` = Show version
 
 ---
 
@@ -98,7 +98,7 @@ We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) and
 
 ## License
 
-TDOC is licensed under the MIT License.
+TDOC is licensed under the `MIT License`.
 
 For commercial or proprietary use, a separate commercial license is available.
 See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md).
