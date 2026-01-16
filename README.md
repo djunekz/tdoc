@@ -113,6 +113,6 @@ Do not post exploits publicly.
 ---
 ## Contact
 TDOC Project Team
-📧 djunekz@protonmail.com
-🌐 GitHub: https://github.com/djunekz/tdoc
+- 📧 djunekz@protonmail.com
+- 🌐 GitHub: https://github.com/djunekz/tdoc
 
