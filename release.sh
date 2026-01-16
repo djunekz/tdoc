@@ -3,6 +3,11 @@
 # TDOC — Full Release Pipeline
 # ==============================
 
+# Set TDOC_ROOT → folder release.sh berada
+TDOC_ROOT="$(cd "$(dirname "$0")" && pwd)"
+export TDOC_ROOT
+
+# Source core scripts
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/version.sh"
 source "$TDOC_ROOT/core/bump_version.sh"
@@ -35,13 +40,14 @@ fi
 # -----------------------------
 # 3️⃣ Build release package
 # -----------------------------
-RELEASE_DIR="/tmp/tdoc-release"
+RELEASE_DIR="$HOME/tdoc-release"
 mkdir -p "$RELEASE_DIR"
 spinner_start "Packaging release tarball"
-cp -r "$TDOC_ROOT/../"* "$RELEASE_DIR/"
-tar -czf "$TDOC_ROOT/tdoc-v$TDOC_VERSION.tar.gz" -C "$RELEASE_DIR" .
+cp -r "$TDOC_ROOT"/* "$RELEASE_DIR/"
+TARBALL="$HOME/tdoc-v$TDOC_VERSION.tar.gz"
+tar -czf "$TARBALL" -C "$RELEASE_DIR" .
 spinner_stop
-print_ok "Release tarball created: tdoc-v$TDOC_VERSION.tar.gz"
+print_ok "Release tarball created: $TARBALL"
 
 # -----------------------------
 # 4️⃣ Push to GitHub
@@ -61,7 +67,7 @@ fi
 # -----------------------------
 echo
 echo "Next step: create a GitHub Release"
-echo "Upload tarball: $TDOC_ROOT/tdoc-v$TDOC_VERSION.tar.gz"
+echo "Upload tarball: $TARBALL"
 echo "Tag: v$TDOC_VERSION"
 
 print_ok "✅ TDOC release pipeline finished"
