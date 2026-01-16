@@ -50,26 +50,27 @@ TDOC is lightweight, open-source, and optimized for **Termux users and developer
 
 ## Installation
 
-```bash
+```
 pkg update && pkg upgrade
 pkg install git curl tar
 ```
 # Clone TDOC
-
-git clone https://github.com/djunekz/tdoc.git
+```
+git clone https://github.com/djunekz/tdoc
 cd tdoc
-
+```
 # Make main script executable
-
+```
 chmod +x tdoc
-
+```
 # Optional: move to PATH
+```
 mv tdoc $PREFIX/bin/
 ```
 ---
 
 ## Commands Overview
-```
+
 - tdoc / tdoc = status
 - Show current = system status
 - tdoc explain = Detailed explanation of broken items
@@ -82,36 +83,36 @@ mv tdoc $PREFIX/bin/
 - tdoc security = Repository security check
 - tdoc security --json = JSON security output
 - tdoc help = Show usage info
-```
+
 ---
 
 ## Contributing
-```
+
 We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before submitting PRs or issues.
 - Fork the repo
 - Create a descriptive branch
 - Submit a PR with detailed description
 - Follow coding style & versioning
-```
+
 ---
 
 ## License
-```
+
 TDOC is licensed under the MIT License.
 
 For commercial or proprietary use, a separate commercial license is available.
 See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md).
-```
+
 ---
 
 ## Security
-```
+
 Please report security issues privately as described in [SECURITY.md](SECURITY.md).
 Do not post exploits publicly.
-```
+
 ---
 ## Contact
 TDOC Project Team
 📧 djunekz@protonmail.com
 🌐 GitHub: https://github.com/djunekz/tdoc
-```
+
