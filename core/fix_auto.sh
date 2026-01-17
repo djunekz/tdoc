@@ -1,7 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
-
 # ==============================
-# TDOC Fix Mode (AUTO)
+# TDOC Fix Mode (AUTO, Compliant)
 # ==============================
 
 source "$TDOC_ROOT/core/ui.sh"
@@ -9,42 +8,30 @@ source "$TDOC_ROOT/core/report.sh"
 source "$TDOC_ROOT/core/repo.sh"
 
 STATE_FILE="$TDOC_ROOT/data/state.env"
+mkdir -p "$HOME/.tdoc"
+REPORT_FILE="$HOME/.tdoc/report.json"
 
 print_header "🤖 TDOC Fix Mode (AUTO)"
 echo
 
-if [ ! -f "$STATE_FILE" ]; then
-  print_err "State file not found. Run: tdoc status"
-  exit 1
-fi
-
 report_init
-
 fixed=()
 skipped=()
 
-# ---------- AUTO FIX FUNCTIONS ----------
-
 auto_fix_storage() {
-  spinner_start "Auto-fixing Storage"
-  termux-setup-storage >/dev/null 2>&1
-  spinner_stop
+  termux-setup-storage
   print_ok "Storage fixed"
   fixed+=("Storage")
 }
 
 auto_fix_repository() {
-  spinner_start "Auto-fixing Repository"
-  termux-change-repo
-  spinner_stop
-  print_ok "Repository configured"
-  fixed+=("Repository")
+  print_warn "Repository auto-fix requires manual selection"
+  print_info "Run manually: termux-change-repo"
+  skipped+=("Repository")
 }
 
 auto_fix_nodejs() {
-  spinner_start "Auto-installing NodeJS"
-  pkg install -y nodejs >/dev/null 2>&1
-  spinner_stop
+  pkg install nodejs
   print_ok "NodeJS installed"
   fixed+=("NodeJS")
 }
@@ -55,32 +42,37 @@ auto_fix_python() {
   skipped+=("Python")
 }
 
-# ---------- MAIN LOOP ----------
+auto_fix_git() {
+  print_warn "Git requires manual fix"
+  print_info "Suggested: pkg install git && git pull"
+  skipped+=("Git")
+}
+
+auto_fix_termux_version() {
+  print_warn "TermuxVersion requires manual inspection"
+  skipped+=("TermuxVersion")
+}
+
+declare -A AUTO_FIX_MAP=(
+  [Storage]=auto_fix_storage
+  [Repository]=auto_fix_repository
+  [NodeJS]=auto_fix_nodejs
+  [Python]=auto_fix_python
+  [Git]=auto_fix_git
+  [TermuxVersion]=auto_fix_termux_version
+)
 
 while IFS='=' read -r key value; do
   [[ -z "$key" || "$value" == "OK" ]] && continue
-
   if [[ "$value" == "BROKEN" || "$value" == "PARTIAL" ]]; then
-    case "$key" in
-      Storage) auto_fix_storage ;;
-      Repository) auto_fix_repository ;;
-      NodeJS) auto_fix_nodejs ;;
-      Python) auto_fix_python ;;
-      *)
-        print_warn "No auto-fix handler for $key"
-        skipped+=("$key")
-        ;;
-    esac
+    echo -e "🔹 Issue Detected: $key"
+    read -rp "Run auto-fix for $key? [y/N]: " CONFIRM
+    [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]] && { print_skip "$key skipped"; skipped+=("$key"); continue; }
+    "${AUTO_FIX_MAP[$key]}"
   fi
 done < "$STATE_FILE"
 
-# ---------- REPORT ----------
-
-report_append \
-  "auto" \
-  "$(printf '"%s",' "${fixed[@]}" | sed 's/,$//')" \
-  "$(printf '"%s",' "${skipped[@]}" | sed 's/,$//')"
-
+report_append "auto" "$(printf '"%s",' "${fixed[@]}" | sed 's/,$//')" "$(printf '"%s",' "${skipped[@]}" | sed 's/,$//')"
 print_ok "Auto-fix completed"
-echo -e "${CYAN}Report saved:${RESET} ~/.tdoc/report.json"
+echo -e "${CYAN}Report saved:${RESET} $REPORT_FILE"
 echo -e "${CYAN}Run:${RESET} tdoc status"

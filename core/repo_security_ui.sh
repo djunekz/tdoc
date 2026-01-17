@@ -6,8 +6,10 @@ source "$TDOC_ROOT/core/repo_security.sh"
 print_header "🛡 TDOC Repository Security Scan"
 echo
 
+# Scan repository
 scan_repo_security
 
+# Show main state
 case "$SECURITY_STATE" in
   OK)
     print_ok "Repository secure (official Termux mirror)"
@@ -18,19 +20,30 @@ case "$SECURITY_STATE" in
   DANGER)
     print_err "Repository is NOT SAFE"
     ;;
+  *)
+    print_warn "Repository state unknown"
+    ;;
 esac
 
 echo
 
-for w in "${WARNINGS[@]}"; do
-  print_warn "$w"
-done
+# Show detailed warnings
+if [ ${#WARNINGS[@]} -gt 0 ]; then
+  print_warn "Warnings:"
+  for w in "${WARNINGS[@]}"; do
+    echo "• $w"
+  done
+fi
 
-for d in "${DANGERS[@]}"; do
-  print_err "$d"
-done
-
-if [ "${#DANGERS[@]}" -gt 0 ]; then
+# Show detailed dangers
+if [ ${#DANGERS[@]} -gt 0 ]; then
+  print_err "Dangers:"
+  for d in "${DANGERS[@]}"; do
+    echo "• $d"
+  done
   echo
   print_info "Suggested action: tdoc fix"
 fi
+
+# Optional: timestamp
+print_info "Scan completed at: $(date -Iseconds)"

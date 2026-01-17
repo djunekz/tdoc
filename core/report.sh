@@ -6,7 +6,10 @@ REPORT_FILE="$REPORT_DIR/report.json"
 mkdir -p "$REPORT_DIR"
 
 report_init() {
-  [ ! -f "$REPORT_FILE" ] && echo "[]" > "$REPORT_FILE"
+  # Safe initialization
+  if [ ! -f "$REPORT_FILE" ] || [ ! -s "$REPORT_FILE" ]; then
+    echo "[]" > "$REPORT_FILE"
+  fi
 }
 
 report_append() {
@@ -17,6 +20,7 @@ report_append() {
   local now
   now="$(date '+%Y-%m-%d %H:%M:%S')"
 
+  # Entry JSON
   local entry
   entry=$(cat <<EOF
 {
@@ -28,11 +32,18 @@ report_append() {
 EOF
 )
 
-  # Append JSON safely (bash-only, no jq)
+  # Append safely
   tmp=$(mktemp)
+  # If file empty, write initial []
+  [ ! -s "$REPORT_FILE" ] && echo "[]" > "$REPORT_FILE"
+  # Remove trailing ] from existing file
   sed '$ s/]$//' "$REPORT_FILE" > "$tmp"
+  # Add comma if not the first entry
   [ "$(tail -n 1 "$REPORT_FILE")" != "[" ] && echo "," >> "$tmp"
+  # Append new entry
   echo "$entry" >> "$tmp"
+  # Close array
   echo "]" >> "$tmp"
+  # Replace original file
   mv "$tmp" "$REPORT_FILE"
 }
