@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
 ## [1.0.1] - 2026-01-17
 
 ### Added
@@ -24,5 +26,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - GitHub update command
 - UX enhancements: colors, icons, spinners
 - Professional README, LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT
-
-## [Unreleased]
