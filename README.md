@@ -76,8 +76,6 @@ mv tdoc $PREFIX/bin/
 - `tdoc fix` = Run manual fix wizard
 - `tdoc fix --auto` = Run automatic fix process
 - `tdoc report` = Show raw system state report
-- `tdoc update` = Update TDOC from GitHub Release
-- `tdoc update --check` = Check latest version only
 - `tdoc doctor --json` = JSON output for integrations
 - `tdoc security` = Repository security check
 - `tdoc security --json` = JSON security output
