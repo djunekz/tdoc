@@ -1,40 +1,21 @@
 # TDOC — Changelog
 
 All notable changes to TDOC will be documented in this file.
-The format is based on Keep a Changelog.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-
-## [Unreleased]
-
-## [1.0.6] - 2026-01-17
-### Added
-- 
-
-
-## [1.0.5] - 2026-01-17
-### Added
-- 
-
-
-## [1.0.4] - 2026-01-17
-### Added
-- 
-
-
-## [1.0.3] - 2026-01-17
-### Added
-- 
-
-## [1.0.2] - 2026-01-17
-### Added
-- 
-
+---
 
 ## [1.0.1] - 2026-01-17
-### Added
-- 
 
+### Added
+- Initial release automation
+
+---
+
+## [1.0.0] - 2026-01-16
+
+### Added
 - Initial release of TDOC
 - System scan for Storage, Repository, Python, NodeJS
 - Manual & automatic fix mode
@@ -43,7 +24,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - GitHub update command
 - UX enhancements: colors, icons, spinners
 - Professional README, LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT
----
 
-## [1.0.0] - 2026-01-17
-
+## [Unreleased]
