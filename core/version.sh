@@ -4,7 +4,7 @@
 # ==============================
 
 TDOC_NAME="tdoc"
-TDOC_VERSION="1.0.5"
+TDOC_VERSION="1.0.6"
 TDOC_CODENAME="stable"
 TDOC_BUILD_DATE="2026-01-16"
 
