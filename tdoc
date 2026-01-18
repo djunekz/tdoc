@@ -8,12 +8,25 @@
 # https://opensource.org/licenses/MIT
 #
 #
-export TDOC_ROOT="$PREFIX/lib/tdoc"
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+export TDOC_ROOT="${PREFIX}/lib/tdoc"
+
+# Sanity check
+if [[ ! -d "$TDOC_ROOT/core" ]]; then
+  echo "TDOC installation corrupted: $TDOC_ROOT/core not found" >&2
+  exit 127
+fi
 
 # Init
 source "$TDOC_ROOT/core/init.sh"
 
-case "$1" in
+cmd="${1:-status}"
+
+case "$cmd" in
 
   version|-v|--version)
     tdoc_version_string
@@ -21,7 +34,7 @@ case "$1" in
 
   fix)
     source "$TDOC_ROOT/core/scan.sh"
-    case "$2" in
+    case "${2:-}" in
       --preview)
         source "$TDOC_ROOT/core/fix_preview.sh"
         ;;
@@ -35,7 +48,7 @@ case "$1" in
     ;;
 
   doctor)
-    case "$2" in
+    case "${2:-}" in
       --json)
         source "$TDOC_ROOT/core/scan.sh" >/dev/null 2>&1
         source "$TDOC_ROOT/core/doctor_json.sh"
@@ -63,11 +76,15 @@ case "$1" in
     ;;
 
   update)
-    source "$TDOC_ROOT/core/update.sh" "$2"
+    echo "TDOC is updated via Termux package manager."
+    echo
+    echo "Run:"
+    echo "  pkg update"
+    echo "  pkg upgrade tdoc"
     ;;
 
   security)
-    case "$2" in
+    case "${2:-}" in
       --json)
         source "$TDOC_ROOT/core/repo_security_json.sh"
         ;;
@@ -82,7 +99,6 @@ case "$1" in
     echo "Version: v$TDOC_VERSION ($TDOC_BUILD)"
     echo
     echo "Usage:"
-    echo ""
     echo "  tdoc status"
     echo "  tdoc version"
     echo "  tdoc explain"
@@ -93,16 +109,13 @@ case "$1" in
     echo "  tdoc doctor --json"
     echo "  tdoc security"
     echo "  tdoc security --json"
-    echo "  tdoc update"
-    echo "  tdoc update --check"
-    echo "  tdoc update patch|minor|major|"
+    echo "  tdoc update    (via pkg)"
     echo "  tdoc help"
     ;;
 
   *)
-    echo "❌ Unknown command: tdoc $1"
-    echo
-    echo "Run: tdoc help"
+    echo "Unknown command: tdoc $cmd" >&2
+    echo "Run: tdoc help" >&2
     exit 1
     ;;
 esac
