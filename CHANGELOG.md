@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Documentation updates
 ---
 
+## [1.0.3] - 2026-01-18
+### Added
+- Planned feature (UI Display)
+- Documentation updates
+---
+
 ## [1.0.2] - 2026-01-18
 ### What's New
 - Update install.sh and Uninstall.sh
