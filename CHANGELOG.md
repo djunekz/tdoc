@@ -7,9 +7,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ---
 
 ## [Unreleased]
-### Added
 - Planned feature
-- Documentation updates
+- Documentation Updates
+---
+
+## [1.0.4] - 2026-01-19
+### What's New
+AI : This is a static diagnostic helper.
+It provides guidance based on predefined knowledge.
+It is NOT a real AI
+(all explanations are local and offline)
+
+### Fixed
+- Fixed repository check
+- Fixed checking storage
+- Fixed lib state location
+
+### Update Documentation
+- Change update information (CHANGELOG.md)
 ---
 
 ## [1.0.3] - 2026-01-18
