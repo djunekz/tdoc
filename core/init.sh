@@ -1,20 +1,43 @@
-#!/bin/bash
-STATE_FILE="$TDOC_ROOT/data/state.env"
-> "$STATE_FILE"
+#!/data/data/com.termux/files/usr/bin/bash
+#
+# TDOC — Initialization (Bootstrap)
+#
 
-export STATE_FILE
+set -o errexit
+set -o pipefail
 
-COLOR_OK="\e[32m"
-COLOR_WARN="\e[33m"
-COLOR_ERR="\e[31m"
-COLOR_RESET="\e[0m"
+# Prevent multiple sourcing
+[[ -n "${TDOC_INIT_DONE:-}" ]] && return 0
+export TDOC_INIT_DONE=1
 
-icon_ok="🟢"
-icon_warn="🟡"
-icon_err="🔴"
+# Root
+export TDOC_ROOT="${TDOC_ROOT:-$PREFIX/lib/tdoc}"
 
+# Sanity check
+if [[ ! -d "$TDOC_ROOT/core" ]]; then
+  echo "TDOC error: core directory not found" >&2
+  return 127
+fi
+
+# Load metadata (single source of truth)
+# shellcheck source=/dev/null
 source "$TDOC_ROOT/core/version.sh"
-source "$TDOC_ROOT/core/explain_repo.sh"
-source "$TDOC_ROOT/core/explain_storage.sh"
-source "$TDOC_ROOT/core/explain_python.sh"
-source "$TDOC_ROOT/core/explain_node.sh"
+
+# ------------------------------
+# Version output function
+# ------------------------------
+tdoc_version_string() {
+  echo "${TDOC_NAME:-tdoc} v${TDOC_VERSION}"
+  [ -n "${TDOC_CODENAME:-}" ] && echo "Codename  : $TDOC_CODENAME"
+  [ -n "${TDOC_BUILD_DATE:-}" ] && echo "Build date: $TDOC_BUILD_DATE"
+}
+
+# Load UI helpers (no output!)
+# shellcheck source=/dev/null
+source "$TDOC_ROOT/core/ui.sh"
+
+# Load explain engine (lazy usage)
+# shellcheck source=/dev/null
+source "$TDOC_ROOT/core/ai_explain.sh"
+
+return 0

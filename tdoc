@@ -26,7 +26,7 @@ cmd="${1:-status}"
 case "$cmd" in
 
   version|-v|--version)
-    tdoc_version_string
+    tdoc_version_ui
     ;;
 
   scan)

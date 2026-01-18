@@ -1,54 +1,39 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ==============================
-# TDOC — Explanation Runner
+# TDOC — Explanation Runner (UI-compliant)
 # ==============================
 
-# Load AI explanations
+source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/ai_explain.sh"
 
-echo -e "🧠 Termux Doctor — Explanation Mode\n"
+print_header "🧠 Termux Doctor — Explanation Mode"
 
 # Check STATE_FILE exists
 if [ ! -f "$STATE_FILE" ]; then
-    echo "❌ STATE_FILE not found: $STATE_FILE"
+    print_err "STATE_FILE not found: $STATE_FILE"
     exit 1
 fi
 
-# Loop through the state file
 while IFS='=' read -r key value; do
     # Skip OK items
-    if [ "$value" = "OK" ]; then
-        continue
-    fi
+    [[ "$value" == "OK" ]] && continue
 
-    echo -e "🔹 Issue Detected: $key\n"
+    print_warn "Issue Detected: $key"
 
-    # Call ai_explain for each key
     case "$key" in
-        Repository)
-            ai_explain "Repository"
-            ;;
-        Storage)
-            ai_explain "Storage"
-            ;;
-        Python)
-            ai_explain "Python"
-            ;;
-        NodeJS)
-            ai_explain "NodeJS"
-            ;;
-        Git)
-            ai_explain "Git"
-            ;;
-        TermuxVersion)
-            ai_explain "TermuxVersion"
+        Repository|Storage|Python|NodeJS|Git|TermuxVersion)
+            ai_explain "$key" | while IFS= read -r line; do
+                print_info "$line"
+            done
             ;;
         *)
-            ai_explain "Unknown"
+            ai_explain "Unknown" | while IFS= read -r line; do
+                print_info "$line"
+            done
             ;;
     esac
 
-    echo "--------------------------------"
+    echo
 done < "$STATE_FILE"
 
-echo -e "\n✅ All explanations processed."
+print_ok "All explanations processed"

@@ -8,21 +8,31 @@ STATE_FILE="$TDOC_ROOT/data/state.env"
 # Load version info
 source "$TDOC_ROOT/core/version.sh"
 
-# Function: escape JSON special chars
+# --- Functions ---
+
+# Escape JSON special characters safely
 escape_json() {
-    echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g'
+    local str="$1"
+    str="${str//\\/\\\\}"
+    str="${str//\"/\\\"}"
+    str="${str//
+/\\n}"
+    str="${str//
+/\\r}"
+    str="${str//	/\\t}"
+    echo "$str"
 }
 
-# Function: get Termux version
+# Get Termux version
 get_termux_version() {
     if command -v termux-info >/dev/null 2>&1; then
-        termux-info | grep -i "Version" | awk '{print $2}' || echo "unknown"
+        termux-info | awk -F: '/Version/ {gsub(/ /,"",$2); print $2}' || echo "unknown"
     else
         echo "unknown"
     fi
 }
 
-# Function: get Git branch & commit
+# Get Git branch & commit
 get_git_info() {
     if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
@@ -72,6 +82,7 @@ json_system="${json_system%,}"
 TERMUX_VERSION=$(get_termux_version)
 GIT_INFO=$(get_git_info)
 
+# --- Output final JSON ---
 cat <<EOF
 {
   "tool": "$TDOC_NAME",
