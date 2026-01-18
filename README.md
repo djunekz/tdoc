@@ -3,8 +3,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Termux-blue.svg)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-
+![Version](https://img.shields.io/github/v/release/djunekz/tdoc?color=blue)
 ---
 
 ## Table of Contents
