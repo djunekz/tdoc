@@ -2,9 +2,6 @@
 #
 # TDOC — Termux Doctor
 #
-# Copyright (c) 2026 TDOC Contributors
-# Licensed under the MIT License.
-#
 
 set -o errexit
 set -o nounset
@@ -21,18 +18,51 @@ fi
 # Init
 source "$TDOC_ROOT/core/init.sh"
 
-cmd="${1:-status}"
+cmd="${1:-help}"
 
+# -----------------------
+# Helpers: header for help
+# -----------------------
+print_help() {
+  local BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo -e "\033[36m$BORDER\033[0m"
+  echo -e "\033[36m🛰 Termux Doctor — Help Menu\033[0m"
+  echo -e "\033[36m$BORDER\033[0m"
+  echo
+  echo -e "Usage:"
+  echo -e "  \033[32mtdoc scan\033[0m              Run system scan only"
+  echo -e "  \033[32mtdoc status\033[0m            Show last scan status"
+  echo -e "  \033[32mtdoc version\033[0m           Show TDOC version"
+  echo -e "  \033[32mtdoc explain\033[0m           Explain broken items"
+  echo -e "  \033[32mtdoc fix\033[0m               Run fixes"
+  echo -e "  \033[32mtdoc fix --preview\033[0m     Preview fixes"
+  echo -e "  \033[32mtdoc fix --auto\033[0m        Apply fixes automatically"
+  echo -e "  \033[32mtdoc report\033[0m            Raw state report"
+  echo -e "  \033[32mtdoc doctor --json\033[0m     Full doctor report (JSON)"
+  echo -e "  \033[32mtdoc security\033[0m          Security checks UI"
+  echo -e "  \033[32mtdoc security --json\033[0m   Security checks JSON"
+  echo -e "  \033[32mtdoc update\033[0m            Update TDOC via pkg"
+  echo -e "  \033[32mtdoc help\033[0m              Show this help"
+  echo
+  echo -e "\033[36m$BORDER\033[0m"
+}
+
+# -----------------------
+# Command routing
+# -----------------------
 case "$cmd" in
 
   version|-v|--version)
+    source "$TDOC_ROOT/core/ui_version.sh"
     tdoc_version_ui
     ;;
 
   scan)
     source "$TDOC_ROOT/core/scan.sh"
-    echo
-    echo "✔ TDOC scan completed"
+    ;;
+
+  status)
+    source "$TDOC_ROOT/core/status.sh"
     ;;
 
   fix)
@@ -57,8 +87,7 @@ case "$cmd" in
         source "$TDOC_ROOT/core/doctor_json.sh"
         ;;
       *)
-        echo "Usage:"
-        echo "  tdoc doctor --json"
+        echo "Usage: tdoc doctor --json"
         ;;
     esac
     ;;
@@ -71,11 +100,6 @@ case "$cmd" in
   report)
     source "$TDOC_ROOT/core/scan.sh"
     cat "$TDOC_ROOT/data/state.env"
-    ;;
-
-  ""|status)
-    source "$TDOC_ROOT/core/scan.sh"
-    source "$TDOC_ROOT/core/status.sh"
     ;;
 
   update)
@@ -97,24 +121,8 @@ case "$cmd" in
     esac
     ;;
 
-  help|-h|--help)
-    echo "Termux Doctor"
-    echo "Version: v$TDOC_VERSION ($TDOC_CODENAME)"
-    echo
-    echo "Usage:"
-    echo "  tdoc scan              Run system scan only"
-    echo "  tdoc status            Scan + show status"
-    echo "  tdoc version"
-    echo "  tdoc explain"
-    echo "  tdoc fix"
-    echo "  tdoc fix --preview"
-    echo "  tdoc fix --auto"
-    echo "  tdoc report"
-    echo "  tdoc doctor --json"
-    echo "  tdoc security"
-    echo "  tdoc security --json"
-    echo "  tdoc update    (via pkg)"
-    echo "  tdoc help"
+  help|-h|--help|"")
+    print_help
     ;;
 
   *)

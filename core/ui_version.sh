@@ -1,25 +1,36 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # ==============================
-# TDOC — Version Info (Minimal UI)
+# TDOC — Version Info (Enhanced UI)
 # ==============================
+
+source "$TDOC_ROOT/core/version.sh"
 
 # Colors & Styles
 BOLD="\e[1m"
 DIM="\e[2m"
 CYAN="\e[36m"
 GREEN="\e[32m"
+YELLOW="\e[33m"
 RESET="\e[0m"
 ICON_INFO="ℹ"
+BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+HEADER_ICON="🛰"
 
 tdoc_version_ui() {
-    # Border hanya untuk header
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${BOLD}${CYAN}🛰 TDOC — Version Info${RESET}"
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    # Detail tanpa border
-    echo -e "${GREEN}Name: ${TDOC_NAME}${RESET}"
-    echo -e "${GREEN}Version: ${TDOC_VERSION}${RESET}"
-    echo -e "${GREEN}Codename: ${TDOC_CODENAME}${RESET}"
-    echo -e "${GREEN}Build Date: ${TDOC_BUILD_DATE}${RESET}"
-    echo -e "\n${DIM}${ICON_INFO} Run 'tdoc help' for usage${RESET}"
+    # Header dengan border ganda
+    echo -e "${CYAN}$BORDER${RESET}"
+    echo -e "${BOLD}${CYAN}${HEADER_ICON} TDOC — Version Info${RESET}"
+    echo -e "${CYAN}$BORDER${RESET}"
+    echo
+
+    # Detail Tool
+    echo -e "${GREEN}Name     : ${BOLD}$TDOC_NAME${RESET}"
+    echo -e "${GREEN}Version  : ${BOLD}$TDOC_VERSION${RESET}"
+    echo -e "${GREEN}Codename : ${BOLD}$TDOC_CODENAME${RESET}"
+    echo -e "${GREEN}Build    : ${BOLD}$TDOC_BUILD_DATE${RESET}"
+    echo
+
+    # Footer hint
+    echo -e "${DIM}${ICON_INFO} Run 'tdoc help' for usage${RESET}"
+    echo -e "${CYAN}$BORDER${RESET}"
 }

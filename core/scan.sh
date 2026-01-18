@@ -1,81 +1,75 @@
 #!/data/data/com.termux/files/usr/bin/bash
-#
-# TDOC — System Scan (UI + Logic)
-#
+# ==============================
+# TDOC — System Scan (UI-enhanced)
+# ==============================
 
 STATE_FILE="$TDOC_ROOT/data/state.env"
 mkdir -p "$TDOC_ROOT/data"
 : > "$STATE_FILE"
 
-source "$TDOC_ROOT/core/ui.sh"
+# -----------------------
+# Colors & Icons
+# -----------------------
+CYAN="\033[36m"
+GREEN="\033[32m"
+RED="\033[31m"
+RESET="\033[0m"
 
-print_header "🔍 TDOC System Scan"
+OK_ICON="✔"
+BROKEN_ICON="✖"
+BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# -------- Repository --------
-spinner_start "Checking repository..."
-if command -v apt >/dev/null 2>&1; then
-  echo "Repository=OK" >> "$STATE_FILE"
-  print_ok "Repository OK"
-else
-  echo "Repository=BROKEN" >> "$STATE_FILE"
-  print_err "Repository BROKEN"
-fi
-spinner_stop
+# -----------------------
+# Header
+# -----------------------
+echo -e "${CYAN}$BORDER${RESET}"
+echo -e "${CYAN}🧪 TDOC — System Scan${RESET}"
+echo -e "${CYAN}$BORDER${RESET}"
+echo
 
-# -------- Storage --------
-spinner_start "Checking storage..."
-if [[ -d "$HOME/storage" && -w "$HOME/storage/shared" ]]; then
-  echo "Storage=OK" >> "$STATE_FILE"
-  print_ok "Storage OK"
-else
-  echo "Storage=BROKEN" >> "$STATE_FILE"
-  print_err "Storage BROKEN"
-fi
-spinner_stop
+# -----------------------
+# Helper: check command
+# -----------------------
+check_item() {
+    local name="$1"
+    local cmd="$2"
 
-# -------- Python --------
-spinner_start "Checking Python..."
-if command -v python >/dev/null 2>&1; then
-  echo "Python=OK" >> "$STATE_FILE"
-  print_ok "Python OK"
-else
-  echo "Python=BROKEN" >> "$STATE_FILE"
-  print_err "Python BROKEN"
-fi
-spinner_stop
+    if eval "$cmd" >/dev/null 2>&1; then
+        echo "$name=OK" >> "$STATE_FILE"
+        echo -e " [${GREEN}$OK_ICON${RESET}] $name"
+    else
+        echo "$name=BROKEN" >> "$STATE_FILE"
+        echo -e " [${RED}$BROKEN_ICON${RESET}] $name"
+    fi
+}
 
-# -------- NodeJS --------
-spinner_start "Checking NodeJS..."
-if command -v node >/dev/null 2>&1; then
-  echo "NodeJS=OK" >> "$STATE_FILE"
-  print_ok "NodeJS OK"
-else
-  echo "NodeJS=BROKEN" >> "$STATE_FILE"
-  print_err "NodeJS BROKEN"
-fi
-spinner_stop
+# -----------------------
+# Run checks
+# -----------------------
+check_item "Repository" "command -v apt"
+check_item "Storage" "[[ -d \"$HOME/storage\" && -w \"$HOME/storage/shared\" ]]"
+check_item "Python" "command -v python"
+check_item "NodeJS" "command -v node"
+check_item "Git" "command -v git"
+check_item "TermuxVersion" "command -v termux-info"
 
-# -------- Git --------
-spinner_start "Checking Git..."
-if command -v git >/dev/null 2>&1; then
-  echo "Git=OK" >> "$STATE_FILE"
-  print_ok "Git OK"
-else
-  echo "Git=BROKEN" >> "$STATE_FILE"
-  print_err "Git BROKEN"
-fi
-spinner_stop
+# -----------------------
+# Summary
+# -----------------------
+ok=0
+broken=0
 
-# -------- TermuxVersion --------
-spinner_start "Checking Termux..."
-if command -v termux-info >/dev/null 2>&1; then
-  echo "TermuxVersion=OK" >> "$STATE_FILE"
-  print_ok "TermuxVersion OK"
-else
-  echo "TermuxVersion=BROKEN" >> "$STATE_FILE"
-  print_err "TermuxVersion BROKEN"
-fi
-spinner_stop
+while IFS='=' read -r key value; do
+    [[ -z "$key" ]] && continue
+    [[ "$value" == "OK" ]] && ok=$((ok + 1)) || broken=$((broken + 1))
+done < "$STATE_FILE"
 
 echo
-print_info "System scan completed. Run 'tdoc status' for full summary."
+echo -e "${CYAN}$BORDER${RESET}"
+echo -e "${CYAN}📝 TDOC Scan Summary${RESET}"
+echo -e "${CYAN}$BORDER${RESET}"
+echo -e "${GREEN}OK     : $ok${RESET}"
+echo -e "${RED}Broken : $broken${RESET}"
+echo -e "${CYAN}$BORDER${RESET}"
+echo
+echo -e "✔ TDOC scan completed"

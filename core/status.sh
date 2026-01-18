@@ -1,75 +1,88 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ==============================
-# TDOC — Status (UI-compliant)
+# TDOC — Status Report (UI-enhanced, Device Info)
 # ==============================
 
 STATE_FILE="$TDOC_ROOT/data/state.env"
-source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/version.sh"
-source "$TDOC_ROOT/core/ai_explain.sh"
 
-JSON_OUTPUT=0
-[[ "${1:-}" == "--json" ]] && JSON_OUTPUT=1
+# -----------------------
+# Colors & Icons
+# -----------------------
+CYAN="\033[36m"
+GREEN="\033[32m"
+RED="\033[31m"
+RESET="\033[0m"
 
-OK_ICON="$ICON_OK"
-BROKEN_ICON="$ICON_ERR"
+OK_ICON="✔"
+BROKEN_ICON="✖"
+BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# -----------------------
 # Header
-if [[ $JSON_OUTPUT -eq 0 ]]; then
-  print_header "🧪 TDOC — Status Report"
-  echo "Tool:"
-  echo "  Name: $TDOC_NAME"
-  echo "  Version: $TDOC_VERSION ($TDOC_CODENAME)"
-  echo "  Build Date: $TDOC_BUILD_DATE"
-  echo
+# -----------------------
+echo -e "${CYAN}$BORDER${RESET}"
+echo -e "${CYAN}🧪 TDOC — Status Report${RESET}"
+echo -e "${CYAN}$BORDER${RESET}"
+echo
+
+# -----------------------
+# Tool Info
+# -----------------------
+echo "Tool:"
+echo "  Name: $TDOC_NAME"
+echo "  Version: $TDOC_VERSION ($TDOC_CODENAME)"
+echo "  Build Date: $TDOC_BUILD_DATE"
+echo
+
+# -----------------------
+# Environment Info
+# -----------------------
+TERMUX_VER="$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || echo unknown)"
+ANDROID_VER="$(getprop ro.build.version.release 2>/dev/null || echo unknown) (SDK $(getprop ro.build.version.sdk 2>/dev/null || echo unknown))"
+DEVICE_MANUF="$(getprop ro.product.manufacturer 2>/dev/null || echo unknown)"
+DEVICE_MODEL="$(getprop ro.product.model 2>/dev/null || echo unknown)"
+SYSTEM_BUILD="$(getprop ro.build.display.id 2>/dev/null || echo unknown)"
+CHECKED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
+
+echo "Environment:"
+echo "  Termux Version: $TERMUX_VER"
+echo "  Android: $ANDROID_VER"
+echo "  Device: $DEVICE_MANUF $DEVICE_MODEL"
+echo "  System: $SYSTEM_BUILD"
+echo "  Checked at: $CHECKED_AT"
+echo
+
+# -----------------------
+# Display last saved state
+# -----------------------
+if [[ ! -f "$STATE_FILE" ]]; then
+  echo -e "${BROKEN_ICON} State file not found!"
+  echo "Run: tdoc scan"
+  exit 1
 fi
 
-# State processing
 ok=0
 broken=0
-json_system=""
 
 while IFS='=' read -r key value; do
   [[ -z "$key" ]] && continue
-  json_system+="\"$key\":\"$value\","
-
-  if [[ $JSON_OUTPUT -eq 0 ]]; then
-    if [[ "$value" == "OK" ]]; then
-      print_ok "$key"
-      ok=$((ok + 1))
-    else
-      print_err "$key"
-      ai_explain "$key" | while IFS= read -r line; do
-        print_info "$line"
-      done
-      broken=$((broken + 1))
-    fi
+  if [[ "$value" == "OK" ]]; then
+    echo -e "${GREEN}$OK_ICON $key${RESET}"
+    ok=$((ok + 1))
   else
-    [[ "$value" == "OK" ]] && ok=$((ok + 1)) || broken=$((broken + 1))
+    echo -e "${RED}$BROKEN_ICON $key${RESET}"
+    broken=$((broken + 1))
   fi
 done < "$STATE_FILE"
 
-json_system="${json_system%,}"
-
+# -----------------------
 # Summary
-if [[ $JSON_OUTPUT -eq 0 ]]; then
-  echo
-  print_info "Summary: $ok OK, $broken Broken"
-else
-  cat <<EOF
-{
-  "tool": "$TDOC_NAME",
-  "version": "$TDOC_VERSION",
-  "codename": "$TDOC_CODENAME",
-  "build_date": "$TDOC_BUILD_DATE",
-  "generated_at": "$(date -Iseconds)",
-  "system": {
-    $json_system
-  },
-  "summary": {
-    "ok": $ok,
-    "broken": $broken
-  }
-}
-EOF
-fi
+# -----------------------
+echo
+echo -e "${CYAN}$BORDER${RESET}"
+echo -e "${CYAN}📝 TDOC Status Summary${RESET}"
+echo -e "${CYAN}$BORDER${RESET}"
+echo -e "${GREEN}OK     : $ok${RESET}"
+echo -e "${RED}Broken : $broken${RESET}"
+echo -e "${CYAN}$BORDER${RESET}"
