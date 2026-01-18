@@ -1,59 +1,51 @@
 #!/data/data/com.termux/files/usr/bin/bash
+#
+# TDOC — System Scan (logic only)
+#
 
 STATE_FILE="$TDOC_ROOT/data/state.env"
+
 mkdir -p "$TDOC_ROOT/data"
-> "$STATE_FILE"
-
-source "$TDOC_ROOT/core/ui.sh"
-source "$TDOC_ROOT/core/repo.sh"
-
-print_header "🔍 TDOC System Scan"
-echo
+: > "$STATE_FILE"
 
 # Repository
-spinner_start "Checking repository"
-echo "Repository=$(detect_repository)" >> "$STATE_FILE"
-spinner_stop
-print_ok "Repository checked"
+if command -v apt >/dev/null 2>&1; then
+  echo "Repository=OK" >> "$STATE_FILE"
+else
+  echo "Repository=BROKEN" >> "$STATE_FILE"
+fi
 
 # Storage
-spinner_start "Checking storage"
-if [ -d "$HOME/storage" ] && [ -w "$HOME/storage/shared" ]; then
+if [[ -d "$HOME/storage" && -w "$HOME/storage/shared" ]]; then
   echo "Storage=OK" >> "$STATE_FILE"
 else
   echo "Storage=BROKEN" >> "$STATE_FILE"
 fi
-spinner_stop
-print_ok "Storage checked"
 
 # Python
-spinner_start "Checking Python"
-command -v python >/dev/null 2>&1 \
-  && echo "Python=OK" >> "$STATE_FILE" \
-  || echo "Python=BROKEN" >> "$STATE_FILE"
-spinner_stop
-print_ok "Python checked"
+if command -v python >/dev/null 2>&1; then
+  echo "Python=OK" >> "$STATE_FILE"
+else
+  echo "Python=BROKEN" >> "$STATE_FILE"
+fi
 
 # NodeJS
-spinner_start "Checking NodeJS"
-command -v node >/dev/null 2>&1 \
-  && echo "NodeJS=OK" >> "$STATE_FILE" \
-  || echo "NodeJS=BROKEN" >> "$STATE_FILE"
-spinner_stop
-print_ok "NodeJS checked"
+if command -v node >/dev/null 2>&1; then
+  echo "NodeJS=OK" >> "$STATE_FILE"
+else
+  echo "NodeJS=BROKEN" >> "$STATE_FILE"
+fi
 
 # Git
-spinner_start "Checking Git"
-command -v git >/dev/null 2>&1 \
-  && echo "Git=OK" >> "$STATE_FILE" \
-  || echo "Git=BROKEN" >> "$STATE_FILE"
-spinner_stop
-print_ok "Git checked"
+if command -v git >/dev/null 2>&1; then
+  echo "Git=OK" >> "$STATE_FILE"
+else
+  echo "Git=BROKEN" >> "$STATE_FILE"
+fi
 
-# Termux Version
-spinner_start "Checking Termux version"
-command -v termux-info >/dev/null 2>&1 \
-  && echo "TermuxVersion=OK" >> "$STATE_FILE" \
-  || echo "TermuxVersion=BROKEN" >> "$STATE_FILE"
-spinner_stop
-print_ok "Termux version checked"
+# Termux
+if command -v termux-info >/dev/null 2>&1; then
+  echo "TermuxVersion=OK" >> "$STATE_FILE"
+else
+  echo "TermuxVersion=BROKEN" >> "$STATE_FILE"
+fi

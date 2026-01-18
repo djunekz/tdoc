@@ -4,9 +4,6 @@
 #
 # Copyright (c) 2026 TDOC Contributors
 # Licensed under the MIT License.
-# You may obtain a copy of the License at:
-# https://opensource.org/licenses/MIT
-#
 #
 
 set -o errexit
@@ -30,6 +27,12 @@ case "$cmd" in
 
   version|-v|--version)
     tdoc_version_string
+    ;;
+
+  scan)
+    source "$TDOC_ROOT/core/scan.sh"
+    echo
+    echo "✔ TDOC scan completed"
     ;;
 
   fix)
@@ -96,10 +99,11 @@ case "$cmd" in
 
   help|-h|--help)
     echo "Termux Doctor"
-    echo "Version: v$TDOC_VERSION ($TDOC_BUILD)"
+    echo "Version: v$TDOC_VERSION ($TDOC_CODENAME)"
     echo
     echo "Usage:"
-    echo "  tdoc status"
+    echo "  tdoc scan              Run system scan only"
+    echo "  tdoc status            Scan + show status"
     echo "  tdoc version"
     echo "  tdoc explain"
     echo "  tdoc fix"
