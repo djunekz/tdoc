@@ -1,87 +1,110 @@
 #!/usr/bin/env bash
 # ==============================
-# TDOC Fix Mode (Manual, Compliant)
+# TDOC — Fix Mode (Manual, Compliant)
 # ==============================
+
+: "${TDOC_ROOT:?TDOC_ROOT is not set}"
 
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/report.sh"
-source "$TDOC_ROOT/core/repo.sh"
 
-STATE_FILE="$TDOC_ROOT/data/state.env"
-mkdir -p "$HOME/.tdoc"
-REPORT_FILE="$HOME/.tdoc/report.json"
+STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
 
 print_header "🛠 TDOC Fix Mode (Manual)"
 echo
 
+# ---------- PRECHECK ----------
+if [[ ! -f "$STATE_FILE" ]]; then
+  print_err "No state file found"
+  print_info "Run: tdoc scan"
+  exit 1
+fi
+
+# ---------- INIT REPORT ----------
 report_init
 
-fixed=()
-skipped=()
+fixed_items=()
+skipped_items=()
 
-# ---------- FIX FUNCTIONS ----------
+# ---------- FIX HANDLERS ----------
 
-fix_storage() {
-  read -rp "Run 'termux-setup-storage'? [y/N]: " CONFIRM
-  [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]] && { print_skip "Storage skipped"; skipped+=("Storage"); return; }
-  termux-setup-storage
-  print_ok "Storage fixed"
-  fixed+=("Storage")
+fix_Storage() {
+  read -rp "Run 'termux-setup-storage'? [y/N]: " ans
+  [[ "$ans" =~ ^[Yy]$ ]] || {
+    print_skip "Storage skipped"
+    skipped_items+=("Storage")
+    return
+  }
+
+  if termux-setup-storage; then
+    print_ok "Storage access granted"
+    fixed_items+=("Storage")
+  else
+    print_err "Storage setup failed"
+    skipped_items+=("Storage")
+  fi
 }
 
-fix_repository() {
-  print_info "Run manually: termux-change-repo"
-  skipped+=("Repository")
+fix_Repository() {
+  print_warn "Repository cannot be auto-fixed"
+  print_info "Suggested command: termux-change-repo"
+  skipped_items+=("Repository")
 }
 
-fix_nodejs() {
-  read -rp "Install NodeJS now? [y/N]: " CONFIRM
-  [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]] && { print_skip "NodeJS skipped"; skipped+=("NodeJS"); return; }
-  pkg install nodejs
-  print_ok "NodeJS installed"
-  fixed+=("NodeJS")
+fix_NodeJS() {
+  read -rp "Install NodeJS now? [y/N]: " ans
+  [[ "$ans" =~ ^[Yy]$ ]] || {
+    print_skip "NodeJS skipped"
+    skipped_items+=("NodeJS")
+    return
+  }
+
+  if pkg install -y nodejs; then
+    print_ok "NodeJS installed"
+    fixed_items+=("NodeJS")
+  else
+    print_err "NodeJS installation failed"
+    skipped_items+=("NodeJS")
+  fi
 }
 
-fix_python() {
-  print_warn "Python requires manual intervention"
-  print_info "Suggested: pkg reinstall python"
-  skipped+=("Python")
+fix_Python() {
+  print_warn "Python requires manual review"
+  print_info "Suggested command: pkg reinstall python"
+  skipped_items+=("Python")
 }
 
-fix_git() {
-  print_warn "Git requires manual intervention"
-  print_info "Suggested: pkg install git && git pull"
-  skipped+=("Git")
+fix_Git() {
+  print_warn "Git requires manual review"
+  print_info "Suggested command: pkg install git"
+  skipped_items+=("Git")
 }
 
-# Mapping
-declare -A FIX_MAP=(
-  [Storage]=fix_storage
-  [Repository]=fix_repository
-  [NodeJS]=fix_nodejs
-  [Python]=fix_python
-  [Git]=fix_git
-)
+fix_TermuxVersion() {
+  print_info "Termux version cannot be fixed by TDOC"
+  skipped_items+=("TermuxVersion")
+}
 
-# ---------- MAIN LOOP ----------
+# ---------- DISPATCH ----------
 while IFS='=' read -r key value; do
   [[ -z "$key" || "$value" == "OK" ]] && continue
-  echo -e "${CYAN}Fix $key?${RESET}"
 
-  select choice in "Yes" "Skip"; do
-    case "$choice" in
-      Yes) "${FIX_MAP[$key]}" ;; 
-      Skip) print_skip "$key skipped"; skipped+=("$key") ;;
-      *) echo "Invalid"; continue ;;
-    esac
-    break
-  done
+  handler="fix_$key"
 
-  echo "--------------------------------"
+  echo
+  print_info "Issue detected: $key"
+
+  if declare -f "$handler" >/dev/null; then
+    "$handler"
+  else
+    print_skip "No fix handler for $key"
+    skipped_items+=("$key")
+  fi
 done < "$STATE_FILE"
 
 # ---------- REPORT ----------
-report_append "manual" "$(printf '"%s",' "${fixed[@]}" | sed 's/,$//')" "$(printf '"%s",' "${skipped[@]}" | sed 's/,$//')"
-print_ok "Fix process finished"
-echo -e "${CYAN}Report saved:${RESET} $REPORT_FILE"
-echo -e "${CYAN}Run:${RESET} tdoc status"
+report_append_manual "${fixed_items[@]}" --skipped "${skipped_items[@]}"
+
+echo
+print_ok "Fix process completed"
+print_info "Run: tdoc status"

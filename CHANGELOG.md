@@ -11,6 +11,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Documentation Updates
 ---
 
+## [1.0.5] — 2026-01-19
+### Fixed
+- Repository security scan false-negative
+- Broken JSON report generation
+- Duplicate state entries in status output
+
+### Improved
+- Unified fix handler naming
+- Auto-fix non-interactive compliance
+- Status report determinism
+
+### Removed
+- jq dependency
+- Unsafe JSON string concatenation
+
+### Notes
+This release focuses on internal correctness and upstream compliance.
+---
+
 ## [1.0.4] - 2026-01-19
 ### What's New
 AI : This is a static diagnostic helper.

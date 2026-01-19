@@ -4,7 +4,18 @@
 # ==============================
 # Static, local diagnostic engine for Termux issues
 # Fully compliant with Termux-packages
-# Usage: source core/ai_engine.sh; ai_diagnose <item>
+# Usage:
+#   source core/ai_engine.sh
+#   ai_diagnose <item>
+# ==============================
+
+# -----------------------
+# Disclaimer
+# -----------------------
+# NOTE: This is a static diagnostic helper.
+# It provides guidance based on predefined knowledge.
+# It is NOT a real AI; all explanations are local and offline.
+# -----------------------
 
 ai_diagnose() {
   local item="$1"
@@ -145,7 +156,9 @@ EOF
   esac
 }
 
+# -----------------------
 # Optional interactive helper
+# -----------------------
 ai_diagnose_interactive() {
   echo "Available diagnostic items:"
   echo "1) Storage"
@@ -166,3 +179,5 @@ ai_diagnose_interactive() {
     *) echo "Invalid selection" ;;
   esac
 }
+
+# End of ai_engine.sh

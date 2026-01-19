@@ -1,86 +1,44 @@
 #!/usr/bin/env bash
-# ==============================
-# TDOC — Repository Security Scanner (Compliant, Modular)
-# ==============================
-# Fully read-only; safe for Termux-packages
-# Supports offline scan and subdomains
-# ==============================
+# TDOC — Repository Security Logic
+# Return:
+#   0 = OK
+#   1 = BROKEN
 
 REPO_FILE="$PREFIX/etc/apt/sources.list"
-SECURITY_STATE="OK"
-WARNINGS=()
-DANGERS=()
+KEYRING="$PREFIX/share/keyrings/termux-archive-keyring.gpg"
+APT_LISTS="$PREFIX/var/lib/apt/lists"
 
-# Official Termux domains (subdomains allowed)
-OFFICIAL_DOMAINS=(
-  "packages.termux.dev"
-  "packages-cf.termux.dev"
-)
-
-# Check if domain is allowed (supports subdomains)
-domain_allowed() {
-  local domain="$1"
-  for d in "${OFFICIAL_DOMAINS[@]}"; do
-    [[ "$domain" == *"$d"* ]] && return 0
-  done
-  return 1
-}
-
-# Main repo scan
-# Usage: scan_repo_security [offline]
 scan_repo_security() {
-  local mode="${1:-online}"
+    [[ ! -f "$REPO_FILE" ]] && return 1
+    [[ ! -f "$KEYRING" ]] && return 1
+    [[ ! -d "$APT_LISTS" ]] && return 1
 
-  # Check sources.list exists
-  if [ ! -f "$REPO_FILE" ]; then
-    DANGERS+=("sources.list_missing")
-    SECURITY_STATE="DANGER"
-    return
-  fi
+    local broken=0
 
-  # Parse sources.list
-  while read -r line; do
-    [[ "$line" =~ ^# || -z "$line" ]] && continue
+    while IFS= read -r line; do
+        [[ "$line" =~ ^# || -z "$line" ]] && continue
 
-    url=$(echo "$line" | awk '{print $2}')
-    [[ "$url" =~ ^https?:// ]] || continue
+        local url
+        url=$(echo "$line" | awk '{print $2}')
+        [[ "$url" =~ ^https?:// ]] || continue
 
-    domain=$(echo "$url" | sed -E 's#https?://([^/]+)/?.*#\1#')
+        local host
+        host=$(echo "$url" | awk -F/ '{print $3}')
 
-    # HTTP warning
-    if [[ "$url" == http://* ]]; then
-      WARNINGS+=("repo_http:$domain")
-      [[ "$SECURITY_STATE" == "OK" ]] && SECURITY_STATE="WARNING"
-    fi
+        local release
+        release=$(ls "$APT_LISTS" 2>/dev/null | grep "$host" | grep "_Release$" | head -n1)
 
-    # Domain whitelist
-    if ! domain_allowed "$domain"; then
-      DANGERS+=("unofficial_domain:$domain")
-      SECURITY_STATE="DANGER"
-    fi
-  done < "$REPO_FILE"
+        [[ -z "$release" ]] && broken=1 && continue
 
-  # Only check apt update if not offline
-  if [[ "$mode" != "offline" ]]; then
-    if ! apt update >/dev/null 2>&1; then
-      WARNINGS+=("apt_update_failed")
-      [[ "$SECURITY_STATE" == "OK" ]] && SECURITY_STATE="WARNING"
-    fi
-  fi
+        release="$APT_LISTS/$release"
+        sig="${release}.gpg"
 
-  # Optional: apt-key check (skip if deprecated)
-  if command -v apt-key >/dev/null 2>&1; then
-    apt-key list >/dev/null 2>&1 || {
-      WARNINGS+=("apt_key_issue")
-      [[ "$SECURITY_STATE" == "OK" ]] && SECURITY_STATE="WARNING"
-    }
-  fi
-}
+        [[ ! -f "$sig" ]] && broken=1 && continue
 
-# Optional: human-readable summary
-print_repo_security_summary() {
-  echo -e "\n🔒 Repository Security Scan"
-  echo "State   : $SECURITY_STATE"
-  [ ${#WARNINGS[@]} -gt 0 ] && echo "Warnings: ${WARNINGS[*]}"
-  [ ${#DANGERS[@]} -gt 0 ] && echo "Dangers : ${DANGERS[*]}"
+        gpg --keyring "$KEYRING" --verify "$sig" "$release" \
+            >/dev/null 2>&1 || broken=1
+
+    done < "$REPO_FILE"
+
+    return "$broken"
 }

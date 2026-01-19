@@ -1,49 +1,43 @@
 #!/usr/bin/env bash
+# ==============================
+# TDOC — Repository Security UI
+# ==============================
+# UI wrapper only.
+# No system modification.
+# Relies solely on exit code from core logic.
+# ==============================
 
+set -euo pipefail
+
+# Ensure TDOC_ROOT is defined
+: "${TDOC_ROOT:?TDOC_ROOT is not set}"
+
+# -----------------------
+# Dependencies
+# -----------------------
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/repo_security.sh"
 
+# -----------------------
+# Header
+# -----------------------
 print_header "🛡 TDOC Repository Security Scan"
 echo
 
-# Scan repository
-scan_repo_security
+# -----------------------
+# Run scan
+# -----------------------
+if scan_repo_security; then
+    print_ok "Repository metadata and signatures are valid"
+    STATE="OK"
+else
+    print_err "Repository metadata or signature verification failed"
+    STATE="BROKEN"
+fi
 
-# Show main state
-case "$SECURITY_STATE" in
-  OK)
-    print_ok "Repository secure (official Termux mirror)"
-    ;;
-  WARNING)
-    print_warn "Repository has security warnings"
-    ;;
-  DANGER)
-    print_err "Repository is NOT SAFE"
-    ;;
-  *)
-    print_warn "Repository state unknown"
-    ;;
-esac
-
+# -----------------------
+# Footer
+# -----------------------
 echo
-
-# Show detailed warnings
-if [ ${#WARNINGS[@]} -gt 0 ]; then
-  print_warn "Warnings:"
-  for w in "${WARNINGS[@]}"; do
-    echo "• $w"
-  done
-fi
-
-# Show detailed dangers
-if [ ${#DANGERS[@]} -gt 0 ]; then
-  print_err "Dangers:"
-  for d in "${DANGERS[@]}"; do
-    echo "• $d"
-  done
-  echo
-  print_info "Suggested action: tdoc fix"
-fi
-
-# Optional: timestamp
-print_info "Scan completed at: $(date -Iseconds)"
+print_info "State   : $STATE"
+print_info "Checked : $(date -Iseconds)"
