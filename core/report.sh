@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 
 REPORT_DIR="$HOME/.tdoc"
 REPORT_FILE="$REPORT_DIR/report.json"

@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 #
 # TDOC — Termux Doctor
 #
@@ -8,7 +8,6 @@ set -o nounset
 set -o pipefail
 
 export TDOC_ROOT="${PREFIX}/lib/tdoc"
-export TDOC_STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"
 
 # Sanity check
 if [[ ! -d "$TDOC_ROOT/core" ]]; then
@@ -27,7 +26,7 @@ cmd="${1:-help}"
 print_help() {
   local BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo -e "\033[36m$BORDER\033[0m"
-  echo -e "\033[36m🛰 Termux Doctor — Help Menu${RESET}"
+  echo -e "\033[36m🛰 Termux Doctor — Help Menu\033[0m"
   echo -e "\033[36m$BORDER\033[0m"
   echo
   echo -e "Usage:"
@@ -49,11 +48,6 @@ print_help() {
 }
 
 # -----------------------
-# Ensure state directory exists
-# -----------------------
-mkdir -p "$(dirname "$TDOC_STATE_FILE")"
-
-# -----------------------
 # Command routing
 # -----------------------
 case "$cmd" in
@@ -68,10 +62,6 @@ case "$cmd" in
     ;;
 
   status)
-    if [[ ! -f "$TDOC_STATE_FILE" ]]; then
-      echo "State file not found, run 'tdoc scan' first."
-      exit 1
-    fi
     source "$TDOC_ROOT/core/status.sh"
     ;;
 
@@ -103,20 +93,13 @@ case "$cmd" in
     ;;
 
   explain)
-    if [[ ! -f "$TDOC_STATE_FILE" ]]; then
-      echo "State file not found, run 'tdoc scan' first."
-      exit 1
-    fi
     source "$TDOC_ROOT/core/scan.sh"
     source "$TDOC_ROOT/core/explain.sh"
     ;;
 
   report)
-    if [[ ! -f "$TDOC_STATE_FILE" ]]; then
-      echo "State file not found, run 'tdoc scan' first."
-      exit 1
-    fi
-    cat "$TDOC_STATE_FILE"
+    source "$TDOC_ROOT/core/scan.sh"
+    cat "$TDOC_ROOT/data/state.env"
     ;;
 
   update)

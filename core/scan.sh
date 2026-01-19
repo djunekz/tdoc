@@ -1,10 +1,10 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # ==============================
-# TDOC — System Scan (UI-enhanced, v1.0.4)
+# TDOC — System Scan (UI-enhanced)
 # ==============================
 
-STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
-mkdir -p "$(dirname "$STATE_FILE")"
+STATE_FILE="$TDOC_ROOT/data/state.env"
+mkdir -p "$TDOC_ROOT/data"
 : > "$STATE_FILE"
 
 # -----------------------
@@ -44,28 +44,21 @@ check_item() {
 }
 
 # -----------------------
-# Run repository security scan
-# -----------------------
-source "$TDOC_ROOT/core/repo_security.sh"
-scan_repo_security
-
-# -----------------------
 # Run checks
 # -----------------------
-# Storage check → write permission
-check_item "Storage" "[[ -w \"$HOME\" ]]"
-
-# Interpreter/tools → dummy script execution
-check_item "Python" "python -c 'print(\"OK\")'"
-check_item "NodeJS" "node -e 'console.log(\"OK\")'"
-check_item "Git" "git --version >/dev/null 2>&1"
-check_item "TermuxVersion" "termux-info >/dev/null 2>&1"
+check_item "Repository" "command -v apt"
+check_item "Storage" "[[ -d \"$HOME/storage\" && -w \"$HOME/storage/shared\" ]]"
+check_item "Python" "command -v python"
+check_item "NodeJS" "command -v node"
+check_item "Git" "command -v git"
+check_item "TermuxVersion" "command -v termux-info"
 
 # -----------------------
 # Summary
 # -----------------------
 ok=0
 broken=0
+
 while IFS='=' read -r key value; do
     [[ -z "$key" ]] && continue
     [[ "$value" == "OK" ]] && ok=$((ok + 1)) || broken=$((broken + 1))

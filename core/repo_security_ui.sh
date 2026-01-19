@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/repo_security.sh"

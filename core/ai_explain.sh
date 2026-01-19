@@ -1,21 +1,10 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # ==============================
 # TDOC — AI Explain Engine (Offline, English)
 # ==============================
 # Static, local explanations for common Termux issues
 # Fully compliant with Termux-packages
-# Usage:
-#   source core/ai_explain.sh
-#   ai_explain <item>
-# ==============================
-
-# -----------------------
-# Disclaimer
-# -----------------------
-# NOTE: This is a static explanation helper.
-# It provides guidance based on predefined knowledge.
-# It is NOT a real AI; all explanations are local and offline.
-# -----------------------
+# Usage: source core/ai_explain.sh; ai_explain <item>
 
 ai_explain() {
   local item="$1"
@@ -54,7 +43,6 @@ Common Issues:
 How it works:
 • Repositories listed in \$PREFIX/etc/apt/sources.list
 • 'apt update' fetches package lists from these repositories
-• Ensure repository signatures are valid using Termux keyring
 
 Recommended Action:
 → Run: termux-change-repo
@@ -154,9 +142,7 @@ EOF
   esac
 }
 
-# -----------------------
 # Optional interactive helper
-# -----------------------
 ai_explain_interactive() {
   echo "Available explanation items:"
   echo "1) Storage"
@@ -177,5 +163,3 @@ ai_explain_interactive() {
     *) echo "Invalid selection" ;;
   esac
 }
-
-# End of ai_explain.sh

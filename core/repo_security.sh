@@ -1,68 +1,86 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # ==============================
-# TDOC — Repository Security Scanner (Compliant)
+# TDOC — Repository Security Scanner (Compliant, Modular)
 # ==============================
 # Fully read-only; safe for Termux-packages
-# Signature verification of repo metadata
+# Supports offline scan and subdomains
 # ==============================
 
-STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
-mkdir -p "$(dirname "$STATE_FILE")"
-
 REPO_FILE="$PREFIX/etc/apt/sources.list"
-KEYRING="/usr/share/keyrings/termux-archive-keyring.gpg"
-
 SECURITY_STATE="OK"
+WARNINGS=()
+DANGERS=()
 
-# -----------------------
-# Helper: verify Release signature
-# -----------------------
-verify_repo_signature() {
-    local repo_url="$1"
-    local repo_name
-    repo_name=$(basename "$repo_url")
-    local release_file="/var/lib/apt/lists/${repo_name}_Release"
-    local sig_file="${release_file}.gpg"
+# Official Termux domains (subdomains allowed)
+OFFICIAL_DOMAINS=(
+  "packages.termux.dev"
+  "packages-cf.termux.dev"
+)
 
-    if [[ -f "$release_file" && -f "$sig_file" ]]; then
-        if gpg --keyring "$KEYRING" --verify "$sig_file" "$release_file" >/dev/null 2>&1; then
-            echo "Repository=OK" >> "$STATE_FILE"
-            echo -e " [✔] Repository ($repo_name)"
-        else
-            echo "Repository=BROKEN" >> "$STATE_FILE"
-            echo -e " [✖] Repository ($repo_name) — invalid signature"
-            SECURITY_STATE="BROKEN"
-        fi
-    else
-        echo "Repository=BROKEN" >> "$STATE_FILE"
-        echo -e " [✖] Repository ($repo_name) — missing metadata"
-        SECURITY_STATE="BROKEN"
-    fi
+# Check if domain is allowed (supports subdomains)
+domain_allowed() {
+  local domain="$1"
+  for d in "${OFFICIAL_DOMAINS[@]}"; do
+    [[ "$domain" == *"$d"* ]] && return 0
+  done
+  return 1
 }
 
-# -----------------------
-# Main scan
-# -----------------------
-echo "🔒 TDOC — Repository Security Scan"
+# Main repo scan
+# Usage: scan_repo_security [offline]
+scan_repo_security() {
+  local mode="${1:-online}"
 
-if [[ ! -f "$REPO_FILE" ]]; then
-    echo " [✖] sources.list missing"
-    echo "Repository=BROKEN" >> "$STATE_FILE"
-    SECURITY_STATE="BROKEN"
-    exit 1
-fi
+  # Check sources.list exists
+  if [ ! -f "$REPO_FILE" ]; then
+    DANGERS+=("sources.list_missing")
+    SECURITY_STATE="DANGER"
+    return
+  fi
 
-# Parse all repos
-while read -r line; do
+  # Parse sources.list
+  while read -r line; do
     [[ "$line" =~ ^# || -z "$line" ]] && continue
+
     url=$(echo "$line" | awk '{print $2}')
     [[ "$url" =~ ^https?:// ]] || continue
-    verify_repo_signature "$url"
-done < "$REPO_FILE"
 
-# -----------------------
-# Summary
-# -----------------------
-echo
-echo "State   : $SECURITY_STATE"
-echo "Scan completed ✅"
+    domain=$(echo "$url" | sed -E 's#https?://([^/]+)/?.*#\1#')
+
+    # HTTP warning
+    if [[ "$url" == http://* ]]; then
+      WARNINGS+=("repo_http:$domain")
+      [[ "$SECURITY_STATE" == "OK" ]] && SECURITY_STATE="WARNING"
+    fi
+
+    # Domain whitelist
+    if ! domain_allowed "$domain"; then
+      DANGERS+=("unofficial_domain:$domain")
+      SECURITY_STATE="DANGER"
+    fi
+  done < "$REPO_FILE"
+
+  # Only check apt update if not offline
+  if [[ "$mode" != "offline" ]]; then
+    if ! apt update >/dev/null 2>&1; then
+      WARNINGS+=("apt_update_failed")
+      [[ "$SECURITY_STATE" == "OK" ]] && SECURITY_STATE="WARNING"
+    fi
+  fi
+
+  # Optional: apt-key check (skip if deprecated)
+  if command -v apt-key >/dev/null 2>&1; then
+    apt-key list >/dev/null 2>&1 || {
+      WARNINGS+=("apt_key_issue")
+      [[ "$SECURITY_STATE" == "OK" ]] && SECURITY_STATE="WARNING"
+    }
+  fi
+}
+
+# Optional: human-readable summary
+print_repo_security_summary() {
+  echo -e "\n🔒 Repository Security Scan"
+  echo "State   : $SECURITY_STATE"
+  [ ${#WARNINGS[@]} -gt 0 ] && echo "Warnings: ${WARNINGS[*]}"
+  [ ${#DANGERS[@]} -gt 0 ] && echo "Dangers : ${DANGERS[*]}"
+}

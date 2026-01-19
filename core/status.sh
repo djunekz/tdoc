@@ -1,9 +1,9 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # ==============================
 # TDOC — Status Report (UI-enhanced, Device Info)
 # ==============================
 
-STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
+STATE_FILE="$TDOC_ROOT/data/state.env"
 source "$TDOC_ROOT/core/version.sh"
 
 # -----------------------
@@ -17,16 +17,6 @@ RESET="\033[0m"
 OK_ICON="✔"
 BROKEN_ICON="✖"
 BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# -----------------------
-# System Info
-# -----------------------
-DEVICE_MANUF="$(getprop ro.product.manufacturer 2>/dev/null || echo unknown)"
-DEVICE_MODEL="$(getprop ro.product.model 2>/dev/null || echo unknown)"
-SYSTEM_BUILD="$(getprop ro.build.display.id 2>/dev/null || echo unknown)"
-ANDROID_VER="$(getprop ro.build.version.release 2>/dev/null || echo unknown) (SDK $(getprop ro.build.version.sdk 2>/dev/null || echo unknown))"
-TERMUX_VER="$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || echo unknown)"
-CHECKED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
 
 # -----------------------
 # Header
@@ -48,6 +38,13 @@ echo
 # -----------------------
 # Environment Info
 # -----------------------
+TERMUX_VER="$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || echo unknown)"
+ANDROID_VER="$(getprop ro.build.version.release 2>/dev/null || echo unknown) (SDK $(getprop ro.build.version.sdk 2>/dev/null || echo unknown))"
+DEVICE_MANUF="$(getprop ro.product.manufacturer 2>/dev/null || echo unknown)"
+DEVICE_MODEL="$(getprop ro.product.model 2>/dev/null || echo unknown)"
+SYSTEM_BUILD="$(getprop ro.build.display.id 2>/dev/null || echo unknown)"
+CHECKED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
+
 echo "Environment:"
 echo "  Termux Version: $TERMUX_VER"
 echo "  Android: $ANDROID_VER"
@@ -60,7 +57,7 @@ echo
 # Display last saved state
 # -----------------------
 if [[ ! -f "$STATE_FILE" ]]; then
-  echo -e "${RED}$BROKEN_ICON State file not found!${RESET}"
+  echo -e "${BROKEN_ICON} State file not found!"
   echo "Run: tdoc scan"
   exit 1
 fi

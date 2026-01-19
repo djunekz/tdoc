@@ -1,21 +1,10 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # ==============================
 # TDOC — AI Diagnose Engine (Offline)
 # ==============================
 # Static, local diagnostic engine for Termux issues
 # Fully compliant with Termux-packages
-# Usage:
-#   source core/ai_engine.sh
-#   ai_diagnose <item>
-# ==============================
-
-# -----------------------
-# Disclaimer
-# -----------------------
-# NOTE: This is a static diagnostic helper.
-# It provides guidance based on predefined knowledge.
-# It is NOT a real AI; all explanations are local and offline.
-# -----------------------
+# Usage: source core/ai_engine.sh; ai_diagnose <item>
 
 ai_diagnose() {
   local item="$1"
@@ -156,9 +145,7 @@ EOF
   esac
 }
 
-# -----------------------
 # Optional interactive helper
-# -----------------------
 ai_diagnose_interactive() {
   echo "Available diagnostic items:"
   echo "1) Storage"
@@ -179,5 +166,3 @@ ai_diagnose_interactive() {
     *) echo "Invalid selection" ;;
   esac
 }
-
-# End of ai_engine.sh
