@@ -108,8 +108,21 @@ Please report security issues privately as described in [SECURITY.md](SECURITY.m
 Do not post exploits publicly.
 
 ---
+
+## Security Model
+
+TDOC is designed to be safe by default:
+
+- No root access
+- No background services
+- No telemetry or network calls during scan
+- No package installation/removal without user confirmation
+- Repository verification uses official Termux mechanisms only
+
+TDOC does not modify system state unless explicitly instructed by the user.
+
+---
 ## Contact
 TDOC Project Team
 - 📧 djunekz@protonmail.com
 - 🌐 GitHub: https://github.com/djunekz/tdoc
-
