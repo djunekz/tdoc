@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+.SH NAME
+tdoc \- Termux Doctor, diagnostic and repair utility for Termux environment
+
+.SH SYNOPSIS
+.B tdoc
+[\fICOMMAND\fR] [\fIOPTIONS\fR]
+
+.SH DESCRIPTION
+.B TDOC
+(Termux Doctor) is a diagnostic and repair utility for the Termux environment.
+It scans the system for common configuration issues, missing components,
+repository problems, and provides guided fixes.
+
+TDOC is designed to be safe, transparent, and fully compatible with the
+Termux package ecosystem.
+
+.SH COMMANDS
+.TP
+.B status
+Scan the system and display a human-readable status report.
+
+.TP
+.B version
+Display TDOC version, codename, and build information.
+
+.TP
+.B explain
+Explain detected problems and their causes.
+
+.TP
+.B fix
+Attempt to fix detected issues interactively.
+
+.TP
+.B fix --preview
+Show what actions would be performed without making changes.
+
+.TP
+.B fix --auto
+Automatically fix detected issues without prompting.
+
+.TP
+.B report
+Print raw scan results from the last system scan.
+
+.TP
+.B doctor --json
+Output diagnostic information in JSON format.
+
+.TP
+.B security
+Analyze repository security and configuration.
+
+.TP
+.B security --json
+Output repository security analysis in JSON format.
+
+.TP
+.B update
+Display instructions for updating TDOC via the Termux package manager.
+
+.TP
+.B help
+Display help information.
+
+.SH OPTIONS
+Most commands do not require additional options.
+Some commands support flags such as
+.BR --json ,
+.BR --preview ,
+and
+.BR --auto .
+
+.SH FILES
+.TP
+.I $PREFIX/lib/tdoc/
+TDOC core files.
+
+.TP
+.I $PREFIX/bin/tdoc
+TDOC executable.
+
+.TP
+.I $PREFIX/share/man/man1/tdoc.1
+Manual page.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+
+.TP
+.B 1
+General error or invalid command.
+
+.SH EXAMPLES
+.TP
+Run system diagnostics:
+.RS
+.B tdoc status
+.RE
+
+.TP
+Automatically fix detected problems:
+.RS
+.B tdoc fix --auto
+.RE
+
+.TP
+Get JSON output for scripting:
+.RS
+.B tdoc doctor --json
+.RE
+
+.SH AUTHOR
+TDOC Contributors.
+
+.SH LICENSE
+MIT License.
+
+.SH SEE ALSO
+.BR apt (8),
+.BR pkg (1),
+.BR termux-change-repo (1)
