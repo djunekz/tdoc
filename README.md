@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/usr/bin/env bash
+=======
+# TDOC — Termux Doctor
+>>>>>>> 57edac796ac842f9e4a0787f09d65c774a9a2d90
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Termux-blue.svg)
