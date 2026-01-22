@@ -4,6 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Termux-blue.svg)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
 ![Version](https://img.shields.io/github/v/release/djunekz/tdoc?color=blue)
+![CI](https://github.com/djunekz/tdoc/actions/workflows/tdoc-ci.yml/badge.svg)
 ---
 
 ## Table of Contents
