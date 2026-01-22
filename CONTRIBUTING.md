@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-#!/usr/bin/env bash
-=======
 # Contributing to TDOC
->>>>>>> 57edac796ac842f9e4a0787f09d65c774a9a2d90
 
 First off, thank you for your interest in contributing to TDOC!
 We welcome contributions of all kinds, whether it's reporting bugs, suggesting features, improving documentation, or submitting code.

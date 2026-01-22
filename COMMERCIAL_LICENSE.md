@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-#!/usr/bin/env bash
-=======
 # TDOC Commercial License
->>>>>>> 57edac796ac842f9e4a0787f09d65c774a9a2d90
 
 Copyright (c) 2026 TDOC Contributors
 
