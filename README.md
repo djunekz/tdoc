@@ -1,7 +1,7 @@
 # TDOC — Termux Doctor
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg?logo=github)
-![Platform](https://img.shields.io/badge/platform-Termux-blue.svg?logo=github)
+![Platform](https://img.shields.io/badge/platform-Termux-blue.svg?logo=Android)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg?logo=github)
 ![Version](https://img.shields.io/github/v/release/djunekz/tdoc?color=blue&logo=github)
 [![Downloads](https://img.shields.io/github/downloads/djunekz/tdoc/total?style=for-the-badge&logo=github)](https://github.com/djunekz/tdoc/releases)
