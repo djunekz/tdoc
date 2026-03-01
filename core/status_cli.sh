@@ -18,13 +18,21 @@ RESET="\033[0m"
 OK_ICON="✅"
 BROKEN_ICON="❌"
 
-# Termux version
+# Termux version — tanpa Termux:API
 get_termux_version() {
-    if command -v termux-info >/dev/null 2>&1; then
-        termux-info | grep -i "Version" | awk '{print $2}' || echo "unknown"
-    else
-        echo "unknown"
+    # Coba dari dpkg dulu
+    local ver
+    ver=$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || true)
+    if [[ -n "$ver" ]]; then
+        echo "$ver"
+        return
     fi
+    # Fallback: dari environment variable
+    if [[ -n "${TERMUX_VERSION:-}" ]]; then
+        echo "$TERMUX_VERSION"
+        return
+    fi
+    echo "unknown"
 }
 
 # Git info

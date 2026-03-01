@@ -15,8 +15,12 @@ escape_json() {
 
 # Function: get Termux version
 get_termux_version() {
-    if command -v termux-info >/dev/null 2>&1; then
-        termux-info | grep -i "Version" | awk '{print $2}' || echo "unknown"
+    local ver
+    ver=$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || true)
+    if [[ -n "$ver" ]]; then
+        echo "$ver"
+    elif [[ -n "${TERMUX_VERSION:-}" ]]; then
+        echo "$TERMUX_VERSION"
     else
         echo "unknown"
     fi
