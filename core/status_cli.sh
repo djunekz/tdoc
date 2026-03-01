@@ -3,7 +3,7 @@
 # TDOC — CLI Friendly Status & Explanation
 # ==============================
 
-STATE_FILE="$TDOC_ROOT/data/state.env"
+STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
 
 # Load version & explanations
 source "$TDOC_ROOT/core/version.sh"

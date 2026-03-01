@@ -3,7 +3,7 @@
 # TDOC — Doctor JSON Output with AI Explanations
 # ==============================
 
-STATE_FILE="$TDOC_ROOT/data/state.env"
+STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
 
 # Load version info & AI explanations
 source "$TDOC_ROOT/core/version.sh"

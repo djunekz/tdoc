@@ -7,75 +7,73 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ---
 
 ## [Unreleased]
-- Planned feature
-- Documentation Updates
+- Planned features
+- Documentation updates
+
 ---
 
 ## [1.0.5] — 2026-01-19
 ### Fixed
-- Repository security scan false-negative
-- Broken JSON report generation
-- Duplicate state entries in status output
+- Repository security scan now correctly exports WARNINGS, DANGERS, SECURITY_STATE variables
+- `fix_preview.sh` used undefined `ai_explain_item` — fixed to use `ai_explain`
+- `doctor_json.sh` and `doctor_json_ai.sh` STATE_FILE path inconsistency (was pointing to `$TDOC_ROOT/data/state.env`, now unified to `$PREFIX/var/lib/tdoc/state.env`)
+- `install.sh` was not copying `modules/` and `data/` directories
+- `VERSION` file out of sync with `version.sh`
+- `version.sh` had dynamic `date` call causing inconsistent build date and duplicate `tdoc_version_ui` function
 
-### Improved
-- Unified fix handler naming
-- Auto-fix non-interactive compliance
-- Status report determinism
+### Added
+- `tdoc doctor --json-ai` command routed in main `tdoc` entrypoint
+- `SECURITY_STATE`, `WARNINGS`, `DANGERS` properly initialized in `repo_security.sh`
+- `PREFIX` fallback in `install.sh` for environments without `$PREFIX` set
 
 ### Removed
-- jq dependency
-- Unsafe JSON string concatenation
+- `core/ai_helper.sh` — duplicate of `ai_engine.sh` + `ai_explain.sh`
 
-### Notes
-This release focuses on internal correctness and upstream compliance.
+### Improved
+- Unified `STATE_FILE` path across all core scripts
+- `install.sh` now creates `$PREFIX/var/lib/tdoc` state directory on install
+
 ---
 
 ## [1.0.4] - 2026-01-19
 ### What's New
-AI : This is a static diagnostic helper.
-It provides guidance based on predefined knowledge.
-It is NOT a real AI
-(all explanations are local and offline)
+- AI: Static diagnostic helper (offline, no real AI)
 
 ### Fixed
-- Fixed repository check
-- Fixed checking storage
-- Fixed lib state location
+- Repository check
+- Storage check
+- Lib state location
 
-### Update Documentation
-- Change update information (CHANGELOG.md)
 ---
 
 ## [1.0.3] - 2026-01-18
 ### Added
 - Planned feature (UI Display)
 - Documentation updates
+
 ---
 
 ## [1.0.2] - 2026-01-18
 ### What's New
-- Update install.sh and Uninstall.sh
-- Update feature
+- Updated install.sh and uninstall.sh
+- Updated features
 
 ### Fixed
-- Fixed bug information display (termux version, name, double name)
-- Fixed command not found scan
-- Fixed bug status
+- Bug: information display (termux version, name, double name)
+- Command not found on scan
+- Bug: status display
 
 ### Added
 - Man page
-- Planned features / fixes for next release
 - Improvements in AI explanations
 - Additional repo and security checks
 - Documentation updates
 
-### Remove Feature
-- Automated release pipeline in tool command
 ---
 
 ## [1.0.1] - 2026-01-17
 ### Added
-- Automated release pipeline (bump version, GitHub tagging, release creation)
+- Automated release pipeline
 - Tarball packaging for distribution
 - Minor UX improvements
 
@@ -84,10 +82,8 @@ It is NOT a real AI
 ## [1.0.0] - 2026-01-16
 ### Added
 - Initial release of TDOC
-- System scan for Storage, Repository, Python, NodeJS
+- System scan: Storage, Repository, Python, NodeJS
 - Manual & automatic fix mode
 - Status & explain commands
 - JSON output for doctor & security mode
-- GitHub update command
-- UX enhancements: colors, icons, spinners
-- Professional README, LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT
+- UX: colors, icons, spinners

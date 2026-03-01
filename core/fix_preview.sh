@@ -19,27 +19,27 @@ while IFS='=' read -r key value; do
     Storage:PARTIAL)
       echo -e "${CYAN}[PREVIEW] Storage${RESET}"
       echo -e "${GRAY}→ termux-setup-storage${RESET}"
-      ai_explain_item "Storage"
+      ai_explain "Storage"
       planned+=("\"Storage\"")
       ;;
 
     Repository:BROKEN)
       echo -e "${CYAN}[PREVIEW] Repository${RESET}"
       echo -e "${GRAY}→ termux-change-repo${RESET}"
-      ai_explain_item "Repository"
+      ai_explain "Repository"
       planned+=("\"Repository\"")
       ;;
 
     NodeJS:BROKEN)
       echo -e "${CYAN}[PREVIEW] NodeJS${RESET}"
       echo -e "${GRAY}→ pkg install nodejs${RESET}"
-      ai_explain_item "NodeJS"
+      ai_explain "NodeJS"
       planned+=("\"NodeJS\"")
       ;;
 
     Python:BROKEN)
       print_warn "Python broken — no auto-fix"
-      ai_explain_item "Python"
+      ai_explain "Python"
       skipped+=("\"Python\"")
       ;;
   esac
