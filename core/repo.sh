@@ -1,27 +1,19 @@
-#!/usr/bin/env bash
+repo() {
+  local found=0
 
-# ==============================
-# TDOC Repository Handler
-# ==============================
-
-detect_repository() {
-  local LOG
-  LOG="$(apt update 2>&1)"
-
-  if echo "$LOG" | grep -qiE "404|Release file|NO_PUBKEY|failed|temporary failure"; then
-    echo "BROKEN"
-    return
+  if grep -q "packages.termux.dev" "$PREFIX/etc/apt/sources.list" 2>/dev/null; then
+    found=1
   fi
 
-  if ! grep -q "packages.termux.dev" "$PREFIX/etc/apt/sources.list" 2>/dev/null; then
-    echo "PARTIAL"
-    return
+  if [[ -d "$PREFIX/etc/apt/sources.list.d" ]]; then
+    if grep -rq "packages.termux.dev" "$PREFIX/etc/apt/sources.list.d/" 2>/dev/null; then
+      found=1
+    fi
   fi
 
-  echo "OK"
-}
-
-fix_repository() {
-  echo -e "\033[33m🔧 Fixing Termux repository...\033[0m"
-  termux-change-repo
+  if [[ "$found" -eq 1 ]]; then
+    echo "Repository=OK" >> "$STATE_FILE"
+  else
+    echo "Repository=BROKEN" >> "$STATE_FILE"
+  fi
 }
