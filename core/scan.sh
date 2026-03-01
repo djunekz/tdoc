@@ -68,7 +68,7 @@ check_item "Storage" "Storage Write Access" "[[ -w \"$HOME\" ]]"
 check_item "Python" "Python Interpreter" "python -c 'print(\"OK\")'"
 check_item "NodeJS" "NodeJS Runtime" "node -e 'console.log(\"OK\")'"
 check_item "Git" "Git Version Control" "git --version"
-check_item "TermuxVersion" "Termux Environment" "termux-info"
+check_item "TermuxVersion" "Termux Environment" "[[ -n \"\$PREFIX\" && -d \"\$PREFIX/bin\" ]]"
 
 # -----------------------
 # Summary (safe, no subshell bug)
