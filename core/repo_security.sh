@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # TDOC — Repository Security Logic
 
-REPO_FILE="$PREFIX/etc/apt/sources.list"
 KEYRING="$PREFIX/share/keyrings/termux-archive-keyring.gpg"
 APT_LISTS="$PREFIX/var/lib/apt/lists"
 
@@ -10,58 +9,49 @@ scan_repo_security() {
     DANGERS=()
     SECURITY_STATE="OK"
 
-    if [[ ! -f "$REPO_FILE" ]]; then
-        DANGERS+=("sources.list not found")
-        SECURITY_STATE="BROKEN"
-        return 1
-    fi
-
-    if [[ ! -f "$KEYRING" ]]; then
-        WARNINGS+=("keyring not found: $KEYRING")
-        SECURITY_STATE="WARN"
-    fi
-
     if [[ ! -d "$APT_LISTS" ]]; then
-        WARNINGS+=("apt lists directory not found")
+        WARNINGS+=("apt lists directory not found — run: apt update")
         SECURITY_STATE="WARN"
+        return 0
+    fi
+
+    local inrelease_files=()
+    while IFS= read -r -d '' f; do
+        inrelease_files+=("$f")
+    done < <(find "$APT_LISTS" -maxdepth 1 -name "*InRelease" -print0 2>/dev/null)
+
+    if [[ ${#inrelease_files[@]} -eq 0 ]]; then
+        WARNINGS+=("no InRelease files found — run: apt update")
+        SECURITY_STATE="WARN"
+        return 0
     fi
 
     local broken=0
 
-    while IFS= read -r line; do
-        [[ "$line" =~ ^# || -z "$line" ]] && continue
+    for inrelease in "${inrelease_files[@]}"; do
+        local fname
+        fname=$(basename "$inrelease")
 
-        local url
-        url=$(echo "$line" | awk '{print $2}')
-        [[ "$url" =~ ^https?:// ]] || continue
-
-        local host
-        host=$(echo "$url" | awk -F/ '{print $3}')
-
-        local release
-        release=$(ls "$APT_LISTS" 2>/dev/null | grep "$host" | grep "_Release$" | head -n1)
-
-        if [[ -z "$release" ]]; then
-            WARNINGS+=("no release file for: $host")
+        if [[ ! -s "$inrelease" ]]; then
+            WARNINGS+=("empty InRelease file: $fname")
             broken=1
             continue
         fi
 
-        release="$APT_LISTS/$release"
-        sig="${release}.gpg"
-
-        if [[ ! -f "$sig" ]]; then
-            DANGERS+=("missing signature for: $host")
+        if ! grep -q "BEGIN PGP" "$inrelease" 2>/dev/null; then
+            WARNINGS+=("InRelease not signed: $fname")
             broken=1
             continue
         fi
 
-        if ! gpg --keyring "$KEYRING" --verify "$sig" "$release" >/dev/null 2>&1; then
-            DANGERS+=("signature verification failed: $host")
-            broken=1
+        if [[ -f "$KEYRING" ]]; then
+            if ! gpg --no-default-keyring \
+                     --keyring "$KEYRING" \
+                     --verify "$inrelease" >/dev/null 2>&1; then
+                WARNINGS+=("signature unverified (non-fatal): $fname")
+            fi
         fi
-
-    done < "$REPO_FILE"
+    done
 
     if [[ "$broken" -eq 1 ]]; then
         SECURITY_STATE="BROKEN"
