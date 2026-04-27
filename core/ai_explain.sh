@@ -1,181 +1,73 @@
 #!/usr/bin/env bash
-# ==============================
-# TDOC — AI Explain Engine (Offline, English)
-# ==============================
-# Static, local explanations for common Termux issues
-# Fully compliant with Termux-packages
-# Usage:
-#   source core/ai_explain.sh
-#   ai_explain <item>
-# ==============================
-
-# -----------------------
-# Disclaimer
-# -----------------------
-# NOTE: This is a static explanation helper.
-# It provides guidance based on predefined knowledge.
-# It is NOT a real AI; all explanations are local and offline.
-# -----------------------
 
 ai_explain() {
   local item="$1"
+  local CAUSES="$(t L_AI_COMMON_CAUSES)"
+  local HOW="$(t L_AI_HOW_IT_WORKS)"
+  local REC="$(t L_AI_RECOMMENDED)"
 
   case "$item" in
-
     Storage)
-      cat <<EOF
-🔍 Storage Explanation
-
-Termux requires storage permission to read/write files in /storage/shared.
-
-Common Issues:
-• User did not run 'termux-setup-storage'
-• Permission revoked by Android
-
-How it works:
-• 'termux-setup-storage' creates symlinks in \$HOME/storage
-• Allows access to internal shared storage and SD card directories
-
-Recommended Action:
-→ Run: termux-setup-storage
-EOF
+      echo "🔍 $(t L_AI_STORAGE_TITLE)"
+      echo; echo "$(t L_AI_STORAGE_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_STORAGE_CAUSE1)"; echo "• $(t L_AI_STORAGE_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_STORAGE_HOW1)"; echo "• $(t L_AI_STORAGE_HOW2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_STORAGE_FIX)"
       ;;
-
     Repository)
-      cat <<EOF
-🔍 Repository Explanation
-
-Termux package repository is the source of all 'pkg' and 'apt' packages.
-
-Common Issues:
-• Main repo or mirror not reachable
-• Repository outdated or not compatible with architecture
-
-How it works:
-• Repositories listed in \$PREFIX/etc/apt/sources.list
-• 'apt update' fetches package lists from these repositories
-• Ensure repository signatures are valid using Termux keyring
-
-Recommended Action:
-→ Run: termux-change-repo
-EOF
+      echo "🔍 $(t L_AI_REPO_TITLE)"
+      echo; echo "$(t L_AI_REPO_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_REPO_CAUSE1)"; echo "• $(t L_AI_REPO_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_REPO_HOW1)"; echo "• $(t L_AI_REPO_HOW2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_REPO_FIX)"
       ;;
-
     NodeJS)
-      cat <<EOF
-🔍 NodeJS Explanation
-
-NodeJS is required to run JavaScript apps and npm packages.
-
-Common Issues:
-• NodeJS not installed
-• Binary missing or corrupted
-
-How it works:
-• NodeJS package is official from Termux
-• Install via: 'pkg install nodejs'
-
-Recommended Action:
-→ Run: pkg install nodejs
-EOF
+      echo "🔍 $(t L_AI_NODEJS_TITLE)"
+      echo; echo "$(t L_AI_NODEJS_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_NODEJS_CAUSE1)"; echo "• $(t L_AI_NODEJS_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_NODEJS_HOW1)"; echo "• $(t L_AI_NODEJS_HOW2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_NODEJS_FIX)"
       ;;
-
     Python)
-      cat <<EOF
-🔍 Python Explanation
-
-Python is required for scripts and Python apps in Termux.
-
-Common Issues:
-• Python not installed
-• Binary missing, corrupted, or from wrong repository
-
-How it works:
-• Install official Python package via pkg
-• Binary path: \$PREFIX/bin/python
-
-Recommended Action:
-→ Run: pkg reinstall python
-EOF
+      echo "🔍 $(t L_AI_PYTHON_TITLE)"
+      echo; echo "$(t L_AI_PYTHON_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_PYTHON_CAUSE1)"; echo "• $(t L_AI_PYTHON_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_PYTHON_HOW1)"; echo "• $(t L_AI_PYTHON_HOW2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_PYTHON_FIX)"
       ;;
-
     Git)
-      cat <<EOF
-🔍 Git Explanation
-
-Git is used for version control and repository management.
-
-Common Issues:
-• Git not installed
-• Local repository not in sync with remote
-
-How it works:
-• 'git status' shows local changes
-• 'git pull' updates local repository from remote
-
-Recommended Action:
-→ Run: pkg install git
-→ Run: git pull
-EOF
+      echo "🔍 $(t L_AI_GIT_TITLE)"
+      echo; echo "$(t L_AI_GIT_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_GIT_CAUSE1)"; echo "• $(t L_AI_GIT_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_GIT_HOW1)"; echo "• $(t L_AI_GIT_HOW2)"
+      echo; echo "$REC:"
+      echo "→ $(t L_AI_GIT_FIX1)"; echo "→ $(t L_AI_GIT_FIX2)"
       ;;
-
     TermuxVersion)
-      cat <<EOF
-🔍 Termux Version Explanation
-
-Termux may be outdated, causing compatibility issues.
-
-Common Issues:
-• Old version installed from Play Store or F-Droid
-• Repository misconfigured
-
-How it works:
-• Run 'pkg update && pkg upgrade' to update Termux packages
-• Ensure Termux itself is latest version
-
-Recommended Action:
-→ Update Termux from official source
-→ Run: pkg update && pkg upgrade
-EOF
+      echo "🔍 $(t L_AI_TERMUX_TITLE)"
+      echo; echo "$(t L_AI_TERMUX_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_TERMUX_CAUSE1)"; echo "• $(t L_AI_TERMUX_CAUSE2)"
+      echo; echo "$REC:"
+      echo "→ $(t L_AI_TERMUX_FIX1)"; echo "→ $(t L_AI_TERMUX_FIX2)"
       ;;
-
     *)
-      cat <<EOF
-🔍 Unknown Issue
-
-No static explanation available.
-Manual inspection required.
-
-Recommended Action:
-→ Check Termux logs
-→ Inspect binaries and \$PREFIX path
-EOF
+      echo "🔍 $(t L_AI_UNKNOWN_TITLE)"
+      echo; echo "$(t L_AI_UNKNOWN_DESC)"
+      echo; echo "$REC:"
+      echo "→ $(t L_AI_UNKNOWN_FIX1)"; echo "→ $(t L_AI_UNKNOWN_FIX2)"
       ;;
   esac
 }
 
-# -----------------------
-# Optional interactive helper
-# -----------------------
-ai_explain_interactive() {
-  echo "Available explanation items:"
-  echo "1) Storage"
-  echo "2) Repository"
-  echo "3) NodeJS"
-  echo "4) Python"
-  echo "5) Git"
-  echo "6) TermuxVersion"
-  echo
-  read -rp "Select item to explain: " choice
-  case "$choice" in
-    1) ai_explain "Storage" ;;
-    2) ai_explain "Repository" ;;
-    3) ai_explain "NodeJS" ;;
-    4) ai_explain "Python" ;;
-    5) ai_explain "Git" ;;
-    6) ai_explain "TermuxVersion" ;;
-    *) echo "Invalid selection" ;;
-  esac
-}
-
-# End of ai_explain.sh
+ai_diagnose() { ai_explain "$1"; }

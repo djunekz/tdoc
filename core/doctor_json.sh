@@ -1,45 +1,48 @@
 #!/usr/bin/env bash
 # ==============================
-# TDOC — Doctor JSON Output (Final)
+# TDOC — Doctor JSON Output
 # ==============================
 
-STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
+STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"
 
-# Load version info
 source "$TDOC_ROOT/core/version.sh"
 
-# Function: escape JSON special chars
 escape_json() {
-    echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g'
+  printf '%s' "$1" | awk '{
+    gsub(/\\/, "\\\\")
+    gsub(/"/, "\\\"")
+    gsub(/\t/, "\\t")
+    gsub(/\r/, "\\r")
+    if (NR > 1) printf "\\n"
+    printf "%s", $0
+  }'
 }
 
-# Function: get Termux version
 get_termux_version() {
-    local ver
-    ver=$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || true)
-    if [[ -n "$ver" ]]; then
-        echo "$ver"
-    elif [[ -n "${TERMUX_VERSION:-}" ]]; then
-        echo "$TERMUX_VERSION"
-    else
-        echo "unknown"
-    fi
+  local ver
+  ver=$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || true)
+  if [[ -n "$ver" ]]; then
+    echo "$ver"
+  elif [[ -n "${TERMUX_VERSION:-}" ]]; then
+    echo "$TERMUX_VERSION"
+  else
+    echo "unknown"
+  fi
 }
 
-# Function: get Git branch & commit
 get_git_info() {
-    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-        commit=$(git rev-parse HEAD 2>/dev/null)
-        echo "{\"branch\":\"$branch\",\"commit\":\"$commit\"}"
-    else
-        echo "{}"
-    fi
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    local branch commit
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    commit=$(git rev-parse HEAD 2>/dev/null)
+    printf '{"branch":"%s","commit":"%s"}' "$branch" "$commit"
+  else
+    echo "{}"
+  fi
 }
 
-# --- Check STATE_FILE exists ---
-if [ ! -f "$STATE_FILE" ]; then
-    cat <<EOF
+if [[ ! -f "$STATE_FILE" ]]; then
+  cat <<EOF
 {
   "tool": "$TDOC_NAME",
   "version": "$TDOC_VERSION",
@@ -47,33 +50,33 @@ if [ ! -f "$STATE_FILE" ]; then
   "build_date": "$TDOC_BUILD_DATE",
   "mode": "doctor",
   "error": "state_not_found",
-  "hint": "run tdoc status"
+  "hint": "run: tdoc scan"
 }
 EOF
-    exit 1
+  exit 1
 fi
 
-# --- Build JSON ---
 ok=0
 broken=0
+partial=0
 json_system=""
 
 while IFS='=' read -r key value; do
-    [ -z "$key" ] && continue
-    key_lc=$(echo "$key" | tr 'A-Z' 'a-z')
-    json_system+="\"$key_lc\":\"$(escape_json "$value")\","
+  [[ -z "$key" ]] && continue
+  key_lc=$(echo "$key" | tr 'A-Z' 'a-z')
+  escaped_val=$(escape_json "$value")
+  json_system+="\"$key_lc\":\"$escaped_val\","
 
-    if [ "$value" = "OK" ]; then
-        ok=$((ok + 1))
-    else
-        broken=$((broken + 1))
-    fi
+  case "$value" in
+    OK)      ok=$((ok + 1)) ;;
+    PARTIAL) partial=$((partial + 1)) ;;
+    *)       broken=$((broken + 1)) ;;
+  esac
 done < "$STATE_FILE"
 
-# Remove trailing comma
 json_system="${json_system%,}"
 
-TERMUX_VERSION=$(get_termux_version)
+TERMUX_VER=$(get_termux_version)
 GIT_INFO=$(get_git_info)
 
 cat <<EOF
@@ -83,7 +86,7 @@ cat <<EOF
   "codename": "$TDOC_CODENAME",
   "build_date": "$TDOC_BUILD_DATE",
   "mode": "doctor",
-  "termux_version": "$TERMUX_VERSION",
+  "termux_version": "$TERMUX_VER",
   "git": $GIT_INFO,
   "generated_at": "$(date -Iseconds)",
   "system": {
@@ -91,6 +94,7 @@ cat <<EOF
   },
   "summary": {
     "ok": $ok,
+    "partial": $partial,
     "broken": $broken
   }
 }

@@ -5,16 +5,13 @@
 
 STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
 
-# Load version info & AI explanations
 source "$TDOC_ROOT/core/version.sh"
 source "$TDOC_ROOT/core/ai_explain.sh"
 
-# Escape JSON special chars
 escape_json() {
     echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g'
 }
 
-# Get Termux version
 get_termux_version() {
     local ver
     ver=$(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || true)
@@ -27,7 +24,6 @@ get_termux_version() {
     fi
 }
 
-# Get Git info
 get_git_info() {
     if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
@@ -38,7 +34,6 @@ get_git_info() {
     fi
 }
 
-# Check STATE_FILE exists
 if [ ! -f "$STATE_FILE" ]; then
     cat <<EOF
 {
@@ -54,7 +49,6 @@ EOF
     exit 1
 fi
 
-# Build system JSON
 ok=0
 broken=0
 json_system=""
@@ -67,7 +61,6 @@ while IFS='=' read -r key value; do
         json_system+="\"$key_lc\":{\"status\":\"OK\"},"
         ok=$((ok + 1))
     else
-        # Capture offline explanation and recommendation
         explanation=$(ai_explain "$key" | sed ':a;N;$!ba;s/\n/\\n/g; s/"/\\"/g')
         recommendation=$(echo "$explanation" | grep -Eo "→.*$" | sed 's/^→ //')
         json_system+="\"$key_lc\":{\"status\":\"$value\",\"explanation\":\"$explanation\",\"recommendation\":\"$recommendation\"},"
@@ -75,13 +68,11 @@ while IFS='=' read -r key value; do
     fi
 done < "$STATE_FILE"
 
-# Remove trailing comma
 json_system="${json_system%,}"
 
 TERMUX_VERSION=$(get_termux_version)
 GIT_INFO=$(get_git_info)
 
-# Output final JSON
 cat <<EOF
 {
   "tool": "$TDOC_NAME",

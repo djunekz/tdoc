@@ -1,110 +1,87 @@
 #!/usr/bin/env bash
-# ==============================
-# TDOC — Fix Mode (Manual, Compliant)
-# ==============================
+# TDOC — Fix Mode Manual
 
 : "${TDOC_ROOT:?TDOC_ROOT is not set}"
-
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/report.sh"
+source "$TDOC_ROOT/core/i18n.sh"
+load_lang
 
-STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
-
-print_header "🛠 TDOC Fix Mode (Manual)"
+STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"
+print_header "🛠 $(t L_FIX_HEADER)"
 echo
 
-# ---------- PRECHECK ----------
 if [[ ! -f "$STATE_FILE" ]]; then
-  print_err "No state file found"
-  print_info "Run: tdoc scan"
-  exit 1
+  print_err "$(t L_FIX_NO_STATE)"; print_info "$(t L_FIX_RUN_SCAN)"; exit 1
 fi
 
-# ---------- INIT REPORT ----------
 report_init
-
 fixed_items=()
 skipped_items=()
 
-# ---------- FIX HANDLERS ----------
-
 fix_Storage() {
-  read -rp "Run 'termux-setup-storage'? [y/N]: " ans
-  [[ "$ans" =~ ^[Yy]$ ]] || {
-    print_skip "Storage skipped"
-    skipped_items+=("Storage")
-    return
-  }
-
-  if termux-setup-storage; then
-    print_ok "Storage access granted"
-    fixed_items+=("Storage")
+  read -rp "$(t L_FIX_STORAGE_PROMPT) $(t L_PROMPT_YN): " ans
+  [[ "$ans" =~ ^[YyTt]$ ]] || { print_skip "$(t L_FIX_STORAGE_SKIP)"; skipped_items+=("Storage"); return; }
+  if termux-setup-storage 2>/dev/null; then
+    print_ok "$(t L_FIX_STORAGE_OK)"; fixed_items+=("Storage")
   else
-    print_err "Storage setup failed"
-    skipped_items+=("Storage")
+    print_warn "$(t L_FIX_STORAGE_FAIL)"; skipped_items+=("Storage")
   fi
 }
 
 fix_Repository() {
-  print_warn "Repository cannot be auto-fixed"
-  print_info "Suggested command: termux-change-repo"
+  print_warn "$(t L_FIX_REPO_WARN)"
+  print_info "$(t L_FIX_REPO_HINT)"
   skipped_items+=("Repository")
 }
 
 fix_NodeJS() {
-  read -rp "Install NodeJS now? [y/N]: " ans
-  [[ "$ans" =~ ^[Yy]$ ]] || {
-    print_skip "NodeJS skipped"
-    skipped_items+=("NodeJS")
-    return
-  }
-
-  if pkg install -y nodejs; then
-    print_ok "NodeJS installed"
-    fixed_items+=("NodeJS")
+  read -rp "$(t L_FIX_NODEJS_PROMPT) $(t L_PROMPT_YN): " ans
+  [[ "$ans" =~ ^[YyTt]$ ]] || { print_skip "$(t L_FIX_NODEJS_SKIP)"; skipped_items+=("NodeJS"); return; }
+  spinner_start "NodeJS..."
+  if pkg install -y nodejs 2>/dev/null; then
+    spinner_stop; print_ok "$(t L_FIX_NODEJS_OK)"; fixed_items+=("NodeJS")
   else
-    print_err "NodeJS installation failed"
-    skipped_items+=("NodeJS")
+    spinner_stop; print_err "$(t L_FIX_NODEJS_FAIL)"; skipped_items+=("NodeJS")
   fi
 }
 
 fix_Python() {
-  print_warn "Python requires manual review"
-  print_info "Suggested command: pkg reinstall python"
-  skipped_items+=("Python")
+  read -rp "$(t L_FIX_PYTHON_PROMPT) $(t L_PROMPT_YN): " ans
+  [[ "$ans" =~ ^[YyTt]$ ]] || { print_skip "$(t L_FIX_PYTHON_SKIP)"; skipped_items+=("Python"); return; }
+  spinner_start "Python..."
+  if pkg reinstall -y python 2>/dev/null; then
+    spinner_stop; print_ok "$(t L_FIX_PYTHON_OK)"; fixed_items+=("Python")
+  else
+    spinner_stop; print_err "$(t L_FIX_PYTHON_FAIL)"; print_info "$(t L_FIX_PYTHON_HINT)"; skipped_items+=("Python")
+  fi
 }
 
 fix_Git() {
-  print_warn "Git requires manual review"
-  print_info "Suggested command: pkg install git"
-  skipped_items+=("Git")
+  read -rp "$(t L_FIX_GIT_PROMPT) $(t L_PROMPT_YN): " ans
+  [[ "$ans" =~ ^[YyTt]$ ]] || { print_skip "$(t L_FIX_GIT_SKIP)"; skipped_items+=("Git"); return; }
+  spinner_start "Git..."
+  if pkg install -y git 2>/dev/null; then
+    spinner_stop; print_ok "$(t L_FIX_GIT_OK)"; fixed_items+=("Git")
+  else
+    spinner_stop; print_err "$(t L_FIX_GIT_FAIL)"; print_info "$(t L_FIX_GIT_HINT)"; skipped_items+=("Git")
+  fi
 }
 
 fix_TermuxVersion() {
-  print_info "Termux version cannot be fixed by TDOC"
+  print_info "$(t L_FIX_TERMUX_INFO)"
+  print_info "$(t L_FIX_TERMUX_HINT)"
   skipped_items+=("TermuxVersion")
 }
 
-# ---------- DISPATCH ----------
 while IFS='=' read -r key value; do
   [[ -z "$key" || "$value" == "OK" ]] && continue
-
   handler="fix_$key"
-
-  echo
-  print_info "Issue detected: $key"
-
-  if declare -f "$handler" >/dev/null; then
-    "$handler"
-  else
-    print_skip "No fix handler for $key"
-    skipped_items+=("$key")
-  fi
+  echo; print_info "$(t L_FIX_ISSUE): $key (${RED}${value}${RESET})"
+  if declare -f "$handler" >/dev/null; then "$handler"
+  else print_skip "$(t L_FIX_NO_HANDLER) $key"; skipped_items+=("$key"); fi
 done < "$STATE_FILE"
 
-# ---------- REPORT ----------
-report_append_manual "${fixed_items[@]}" --skipped "${skipped_items[@]}"
+report_append_manual "${fixed_items[@]+"${fixed_items[@]}"}" --skipped "${skipped_items[@]+"${skipped_items[@]}"}"
 
-echo
-print_ok "Fix process completed"
-print_info "Run: tdoc status"
+echo; print_ok "$(t L_FIX_DONE)"; print_info "$(t L_FIX_RUN_STATUS)"

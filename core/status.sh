@@ -12,33 +12,21 @@ source "$TDOC_ROOT/core/ui.sh"
 
 STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
 
-# -----------------------
-# Header
-# -----------------------
 print_header "🧪 TDOC — Status Report"
 echo
 
-# -----------------------
-# Tool Info
-# -----------------------
 echo "Tool:"
 echo "  Name    : $TDOC_NAME"
 echo "  Version : $TDOC_VERSION ($TDOC_CODENAME)"
 echo "  Build   : $TDOC_BUILD_DATE"
 echo
 
-# -----------------------
-# Environment Info
-# -----------------------
 echo "Environment:"
 echo "  Android : $(getprop ro.build.version.release 2>/dev/null || echo unknown)"
 echo "  Termux  : $(dpkg-query -W -f='${Version}' termux-tools 2>/dev/null || echo unknown)"
 echo "  Checked : $(date '+%Y-%m-%d %H:%M:%S')"
 echo
 
-# -----------------------
-# Load State (last value wins)
-# -----------------------
 if [[ ! -f "$STATE_FILE" ]]; then
   print_err "No scan state found"
   print_info "Run: tdoc scan"
@@ -77,9 +65,6 @@ for key in "${!STATE[@]}"; do
   fi
 done
 
-# -----------------------
-# Summary
-# -----------------------
 echo
 print_header "📝 TDOC Status Summary"
 echo -e "${GREEN}OK     : $ok${RESET}"

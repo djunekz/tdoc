@@ -1,91 +1,74 @@
 #!/usr/bin/env bash
-# ==============================
-# TDOC — System Scan (Professional Core)
-# ==============================
+# TDOC — System Scan
 
 set -euo pipefail
-
 : "${TDOC_ROOT:?TDOC_ROOT is not set}"
 
-STATE_FILE="$PREFIX/var/lib/tdoc/state.env"
+source "$TDOC_ROOT/core/ui.sh"
+source "$TDOC_ROOT/core/i18n.sh"
+load_lang
+
+STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"
 mkdir -p "$(dirname "$STATE_FILE")"
-: > "$STATE_FILE"   # selalu reset state
+: > "$STATE_FILE"
 
-# -----------------------
-# Colors & Icons
-# -----------------------
-CYAN="\033[36m"
-GREEN="\033[32m"
-RED="\033[31m"
-RESET="\033[0m"
-
-OK_ICON="✔"
-BROKEN_ICON="✖"
 BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# -----------------------
-# Header
-# -----------------------
-echo -e "${CYAN}$BORDER${RESET}"
-echo -e "${CYAN}🧪 TDOC — System Scan${RESET}"
-echo -e "${CYAN}$BORDER${RESET}"
+print_header "🧪 $(t L_SCAN_HEADER)"
 echo
 
-# -----------------------
-# Helper: check item
-# -----------------------
 check_item() {
-    local key="$1"
-    local label="$2"
-    local cmd="$3"
-
-    if eval "$cmd" >/dev/null 2>&1; then
-        echo "$key=OK" >> "$STATE_FILE"
-        echo -e " [${GREEN}$OK_ICON${RESET}] $label"
-    else
-        echo "$key=BROKEN" >> "$STATE_FILE"
-        echo -e " [${RED}$BROKEN_ICON${RESET}] $label"
-    fi
+  local key="$1" label="$2" cmd="$3"
+  if eval "$cmd" >/dev/null 2>&1; then
+    echo "$key=OK" >> "$STATE_FILE"
+    print_ok "$label"
+  else
+    echo "$key=BROKEN" >> "$STATE_FILE"
+    print_err "$label"
+  fi
 }
 
-# -----------------------
-# Repository Security
-# -----------------------
 source "$TDOC_ROOT/core/repo_security.sh"
-
 if scan_repo_security; then
-    echo "Repository=OK" >> "$STATE_FILE"
-    echo -e " [${GREEN}$OK_ICON${RESET}] Repository Security"
+  echo "Repository=OK" >> "$STATE_FILE"; print_ok "$(t L_SCAN_REPO)"
 else
-    echo "Repository=BROKEN" >> "$STATE_FILE"
-    echo -e " [${RED}$BROKEN_ICON${RESET}] Repository Security"
+  echo "Repository=BROKEN" >> "$STATE_FILE"; print_err "$(t L_SCAN_REPO)"
 fi
 
-# -----------------------
-# Core Checks
-# -----------------------
-check_item "Storage" "Storage Write Access" "[[ -w \"$HOME\" ]]"
-check_item "Python" "Python Interpreter" "python -c 'print(\"OK\")'"
-check_item "NodeJS" "NodeJS Runtime" "node -e 'console.log(\"OK\")'"
-check_item "Git" "Git Version Control" "git --version"
-check_item "TermuxVersion" "Termux Environment" "[[ -n \"\$PREFIX\" && -d \"\$PREFIX/bin\" ]]"
+if [[ -d "$HOME/storage/shared" && -w "$HOME/storage/shared" ]]; then
+  echo "Storage=OK" >> "$STATE_FILE"; print_ok "$(t L_SCAN_STORAGE)"
+elif [[ -d "$HOME/storage" ]]; then
+  echo "Storage=PARTIAL" >> "$STATE_FILE"; print_warn "$(t L_SCAN_STORAGE_PARTIAL)"
+else
+  echo "Storage=BROKEN" >> "$STATE_FILE"; print_err "$(t L_SCAN_STORAGE)"
+fi
 
-# -----------------------
-# Summary (safe, no subshell bug)
-# -----------------------
-ok=0
-broken=0
+check_item "Python"       "$(t L_SCAN_PYTHON)"  "python -c 'print(1)'"
+check_item "NodeJS"       "$(t L_SCAN_NODEJS)"  "node -e 'process.exit(0)'"
+check_item "Git"          "$(t L_SCAN_GIT)"     "git --version"
+check_item "TermuxVersion" "$(t L_SCAN_TERMUX)" "[[ -n \"\$PREFIX\" && -d \"\$PREFIX/bin\" ]]"
 
+if [[ -d "$TDOC_ROOT/modules" ]]; then
+  for mod in "$TDOC_ROOT/modules"/*.sh; do
+    [[ -f "$mod" ]] || continue
+    mod_name=$(basename "$mod" .sh)
+    case "$mod_name" in node|python|storage|repo) continue ;; esac
+    source "$mod"
+    declare -f "check_${mod_name}" >/dev/null 2>&1 && "check_${mod_name}"
+  done
+fi
+
+ok=0; broken=0; partial=0
 while IFS='=' read -r _ value; do
-    [[ "$value" == "OK" ]] && ok=$((ok+1)) || broken=$((broken+1))
+  case "$value" in OK) ok=$((ok+1));; PARTIAL) partial=$((partial+1));; *) broken=$((broken+1));; esac
 done < "$STATE_FILE"
 
 echo
 echo -e "${CYAN}$BORDER${RESET}"
-echo -e "${CYAN}📝 TDOC Scan Summary${RESET}"
+echo -e "${CYAN}📝 $(t L_SCAN_SUMMARY)${RESET}"
 echo -e "${CYAN}$BORDER${RESET}"
-echo -e "${GREEN}OK     : $ok${RESET}"
-echo -e "${RED}Broken : $broken${RESET}"
+echo -e "${GREEN}$(t L_OK_COUNT)      : $ok${RESET}"
+[[ $partial -gt 0 ]] && echo -e "${YELLOW}$(t L_PARTIAL_COUNT) : $partial${RESET}"
+echo -e "${RED}$(t L_BROKEN_COUNT)  : $broken${RESET}"
 echo -e "${CYAN}$BORDER${RESET}"
 echo
-echo -e "✔ TDOC scan completed"
+echo -e "✔ $(t L_SCAN_DONE) — $(t L_SCAN_HINT)"

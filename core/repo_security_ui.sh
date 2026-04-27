@@ -9,24 +9,14 @@
 
 set -euo pipefail
 
-# Ensure TDOC_ROOT is defined
 : "${TDOC_ROOT:?TDOC_ROOT is not set}"
 
-# -----------------------
-# Dependencies
-# -----------------------
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/repo_security.sh"
 
-# -----------------------
-# Header
-# -----------------------
 print_header "🛡 TDOC Repository Security Scan"
 echo
 
-# -----------------------
-# Run scan
-# -----------------------
 if scan_repo_security; then
     print_ok "Repository metadata and signatures are valid"
     STATE="OK"
@@ -35,9 +25,6 @@ else
     STATE="BROKEN"
 fi
 
-# -----------------------
-# Footer
-# -----------------------
 echo
 print_info "State   : $STATE"
 print_info "Checked : $(date -Iseconds)"

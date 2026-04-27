@@ -4,11 +4,7 @@
 # ==============================
 # Fully offline AI-like diagnostics and explanations
 # Language: English
-# Fully compliant with Termux-packages
 
-# -----------------------------
-# Diagnosing common Termux issues
-# -----------------------------
 ai_diagnose() {
   local item="$1"
 
@@ -103,9 +99,6 @@ EOF
   esac
 }
 
-# -----------------------------
-# Explaining issues in detail
-# -----------------------------
 ai_explain() {
   local item="$1"
 

@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-
 # ==============================
 # TDOC UI ENGINE
 # ==============================
 
-# ===== Colors =====
 RESET="\e[0m"
 BOLD="\e[1m"
 DIM="\e[2m"
@@ -16,14 +14,12 @@ BLUE="\e[34m"
 CYAN="\e[36m"
 GRAY="\e[90m"
 
-# ===== Icons =====
 ICON_OK="✔"
 ICON_WARN="⚠"
 ICON_SKIP="↪"
 ICON_ERR="✖"
 ICON_INFO="ℹ"
 
-# ===== Spinner Engine =====
 _SPINNER_PID=""
 _SPINNER_MSG=""
 _SPINNER_FRAMES=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
@@ -59,7 +55,6 @@ spinner_stop() {
   fi
 }
 
-# ===== Progress Bar =====
 progress_bar() {
   local current=$1
   local total=$2
@@ -77,7 +72,6 @@ progress_bar() {
   printf "]${RESET} %3d%%\n" "$percent"
 }
 
-# ===== UI Printers =====
 print_header() {
   echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
   echo -e "${BOLD}${CYAN}$1${RESET}"

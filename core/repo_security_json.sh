@@ -1,18 +1,30 @@
 #!/usr/bin/env bash
-
 # ==============================
 # TDOC — Repository Security JSON
 # ==============================
 
-# Load version (single source of truth)
 source "$TDOC_ROOT/core/version.sh"
-# Load repo security scanner
 source "$TDOC_ROOT/core/repo_security.sh"
 
 scan_repo_security
-# Build JSON arrays safely
-json_warn=$(printf '"%s",' "${WARNINGS[@]}" | sed 's/,$//')
-json_danger=$(printf '"%s",' "${DANGERS[@]}" | sed 's/,$//')
+
+build_json_array() {
+  local -a arr=("${@}")
+  if [[ ${#arr[@]} -eq 0 ]]; then
+    echo "[]"
+    return
+  fi
+  local out="["
+  for item in "${arr[@]}"; do
+    item=$(printf '%s' "$item" | sed 's/"/\\"/g')
+    out+="\"$item\","
+  done
+  out="${out%,}]"
+  echo "$out"
+}
+
+json_warn=$(build_json_array "${WARNINGS[@]+"${WARNINGS[@]}"}")
+json_danger=$(build_json_array "${DANGERS[@]+"${DANGERS[@]}"}")
 
 cat <<EOF
 {
@@ -24,8 +36,8 @@ cat <<EOF
   "generated_at": "$(date -Iseconds)",
   "security": {
     "state": "$SECURITY_STATE",
-    "warnings": [ $json_warn ],
-    "dangers": [ $json_danger ]
+    "warnings": $json_warn,
+    "dangers": $json_danger
   }
 }
 EOF

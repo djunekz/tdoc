@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+
 node() {
-  command -v node >/dev/null && echo "NodeJS=OK" >> "$STATE_FILE" || echo "NodeJS=BROKEN" >> "$STATE_FILE"
+  if command -v node >/dev/null 2>&1; then
+    echo "NodeJS=OK" >> "$STATE_FILE"
+  else
+    echo "NodeJS=BROKEN" >> "$STATE_FILE"
+  fi
 }
