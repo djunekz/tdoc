@@ -11,48 +11,47 @@ BIN_PATH="$PREFIX_PATH/bin/tdoc"
 MAN_DIR="$PREFIX_PATH/share/man/man1"
 STATE_DIR="$PREFIX_PATH/var/lib/tdoc"
 
-echo "🚀 Installing TDOC..."
+echo "🚀 Installing TDOC (Termux Doctor)"
 
-# --- permission check ---
 if [[ ! -w "$PREFIX_PATH/bin" ]]; then
-  echo "❌ No permission to write to $PREFIX_PATH/bin"
+  echo "❌ No write permission to $PREFIX_PATH/bin"
   exit 1
 fi
 
-# --- create directories ---
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$HOME/.tdoc"
 mkdir -p "$MAN_DIR"
 mkdir -p "$STATE_DIR"
 
-# --- copy files ---
-cp -r core "$INSTALL_DIR/"
+cp -r core    "$INSTALL_DIR/"
 cp -r modules "$INSTALL_DIR/"
-cp -r data "$INSTALL_DIR/"
-cp tdoc "$INSTALL_DIR/tdoc"
+cp -r data    "$INSTALL_DIR/"
+cp -r lang    "$INSTALL_DIR/"
 
-# --- man page ---
 if [[ -f "man/tdoc.1" ]]; then
   install -Dm644 man/tdoc.1 "$MAN_DIR/tdoc.1"
   echo "📘 Man page installed: man tdoc"
 else
-  echo "⚠️  Warning: man/tdoc.1 not found, skipping"
+  echo "⚠️  man/tdoc.1 not found, skipping"
 fi
 
-# --- symlink binary ---
+install -Dm755 tdoc "$INSTALL_DIR/tdoc"
 ln -sf "$INSTALL_DIR/tdoc" "$BIN_PATH"
-
-# --- permissions ---
-chmod +x "$INSTALL_DIR/tdoc"
 chmod +x "$BIN_PATH"
+
 find "$INSTALL_DIR" -type f -name "*.sh" -exec chmod +x {} \;
 
-echo "✅ TDOC installed successfully"
+echo "✅ TDOC (Termux Doctor) installed successfully"
 echo
-echo "Usage:"
-echo "  tdoc scan"
-echo "  tdoc status"
-echo "  tdoc fix --auto"
-echo "  tdoc doctor --json"
-echo "  tdoc security"
-echo "  man tdoc"
+echo "Available commands:"
+echo "  tdoc scan              — full system scan"
+echo "  tdoc status            — show last scan status"
+echo "  tdoc fix               — interactive fix wizard"
+echo "  tdoc fix --preview     — preview fixes (dry-run)"
+echo "  tdoc fix --auto        — automatic fix"
+echo "  tdoc check <package>   — check any package"
+echo "  tdoc history           — view operation history"
+echo "  tdoc benchmark         — measure performance"
+echo "  tdoc doctor --live     — real-time monitoring"
+echo "  tdoc lang set <code>   — set display language (en, id)"
+echo "  tdoc help              — show full help"
