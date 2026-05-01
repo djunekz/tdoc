@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog entry
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION_BARE="${VERSION#v}"
+
+          NOTES=$(awk "/^## \[${VERSION_BARE}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+
+          if [[ -z "$NOTES" ]]; then
+            NOTES="See [CHANGELOG.md](CHANGELOG.md) for details."
+          fi
+
+          echo "$NOTES" > release_notes.txt
+
+      - name: Build release archive
+        id: archive
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ARCHIVE="tdoc-${VERSION}.tar.gz"
+
+          tar -czf "$ARCHIVE" \
+            tdoc \
+            install.sh \
+            uninstall.sh \
+            core/ \
+            modules/ \
+            lang/ \
+            man/ \
+            data/ \
+            README.md \
+            CHANGELOG.md \
+            LICENSE \
+            CONTRIBUTING.md \
+            SECURITY.md \
+            CODE_OF_CONDUCT.md \
+            VERSION
+
+          sha256sum "$ARCHIVE" > "${ARCHIVE}.sha256"
+
+          echo "archive=${ARCHIVE}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Termux-Doctor ${{ steps.version.outputs.version }}"
+          body_path: release_notes.txt
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: |
+            tdoc-${{ steps.version.outputs.version }}.tar.gz
+            tdoc-${{ steps.version.outputs.version }}.tar.gz.sha256
