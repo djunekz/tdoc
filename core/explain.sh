@@ -38,6 +38,9 @@ while IFS='=' read -r key value; do
         TermuxVersion)
             ai_explain "TermuxVersion"
             ;;
+        DpkgLock|DpkgStatusDB|DpkgHalfInstalled|DpkgReinstRequired|DpkgBrokenDeps|DpkgMissingFilesList|DpkgFileConflicts)
+            ai_explain "$key"
+            ;;
         *)
             ai_explain "Unknown"
             ;;

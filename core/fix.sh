@@ -5,6 +5,7 @@
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/report.sh"
 source "$TDOC_ROOT/core/i18n.sh"
+source "$TDOC_ROOT/core/fix_dpkg.sh"
 load_lang
 
 STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"
@@ -79,6 +80,7 @@ while IFS='=' read -r key value; do
   handler="fix_$key"
   echo; print_info "$(t L_FIX_ISSUE): $key (${RED}${value}${RESET})"
   if declare -f "$handler" >/dev/null; then "$handler"
+  elif declare -f "fix_Dpkg${key#Dpkg}" >/dev/null 2>&1; then "fix_Dpkg${key#Dpkg}"
   else print_skip "$(t L_FIX_NO_HANDLER) $key"; skipped_items+=("$key"); fi
 done < "$STATE_FILE"
 

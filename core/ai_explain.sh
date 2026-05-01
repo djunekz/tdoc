@@ -61,6 +61,62 @@ ai_explain() {
       echo; echo "$REC:"
       echo "→ $(t L_AI_TERMUX_FIX1)"; echo "→ $(t L_AI_TERMUX_FIX2)"
       ;;
+    DpkgLock)
+      echo "🔍 $(t L_AI_DPKG_LOCK_TITLE)"
+      echo; echo "$(t L_AI_DPKG_LOCK_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_DPKG_LOCK_CAUSE1)"; echo "• $(t L_AI_DPKG_LOCK_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_DPKG_LOCK_HOW1)"; echo "• $(t L_AI_DPKG_LOCK_HOW2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_DPKG_LOCK_FIX)"
+      ;;
+    DpkgStatusDB)
+      echo "🔍 $(t L_AI_DPKG_STATUS_TITLE)"
+      echo; echo "$(t L_AI_DPKG_STATUS_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_DPKG_STATUS_CAUSE1)"; echo "• $(t L_AI_DPKG_STATUS_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_DPKG_STATUS_HOW1)"; echo "• $(t L_AI_DPKG_STATUS_HOW2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_DPKG_STATUS_FIX)"
+      ;;
+    DpkgHalfInstalled)
+      echo "🔍 $(t L_AI_DPKG_HALF_TITLE)"
+      echo; echo "$(t L_AI_DPKG_HALF_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_DPKG_HALF_CAUSE1)"; echo "• $(t L_AI_DPKG_HALF_CAUSE2)"
+      echo; echo "$HOW:"
+      echo "• $(t L_AI_DPKG_HALF_HOW1)"; echo "• $(t L_AI_DPKG_HALF_HOW2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_DPKG_HALF_FIX)"
+      ;;
+    DpkgReinstRequired)
+      echo "🔍 $(t L_AI_DPKG_REINST_TITLE)"
+      echo; echo "$(t L_AI_DPKG_REINST_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_DPKG_REINST_CAUSE1)"; echo "• $(t L_AI_DPKG_REINST_CAUSE2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_DPKG_REINST_FIX)"
+      ;;
+    DpkgBrokenDeps)
+      echo "🔍 $(t L_AI_DPKG_BROKEN_TITLE)"
+      echo; echo "$(t L_AI_DPKG_BROKEN_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_DPKG_BROKEN_CAUSE1)"; echo "• $(t L_AI_DPKG_BROKEN_CAUSE2)"
+      echo; echo "$HOW:"; echo "• $(t L_AI_DPKG_BROKEN_HOW)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_DPKG_BROKEN_FIX)"
+      ;;
+    DpkgMissingFilesList)
+      echo "🔍 $(t L_AI_DPKG_FILES_TITLE)"
+      echo; echo "$(t L_AI_DPKG_FILES_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_DPKG_FILES_CAUSE1)"; echo "• $(t L_AI_DPKG_FILES_CAUSE2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_DPKG_FILES_FIX)"
+      ;;
+    DpkgFileConflicts)
+      echo "🔍 $(t L_AI_DPKG_CONFLICTS_TITLE)"
+      echo; echo "$(t L_AI_DPKG_CONFLICTS_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_AI_DPKG_CONFLICTS_CAUSE1)"; echo "• $(t L_AI_DPKG_CONFLICTS_CAUSE2)"
+      echo; echo "$REC:"; echo "→ $(t L_AI_DPKG_CONFLICTS_FIX)"
+      ;;
     *)
       echo "🔍 $(t L_AI_UNKNOWN_TITLE)"
       echo; echo "$(t L_AI_UNKNOWN_DESC)"

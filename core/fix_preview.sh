@@ -30,6 +30,13 @@ while IFS='=' read -r key value; do
     Python)       echo -e "${GRAY}  → pkg reinstall python${RESET}";       planned+=("Python") ;;
     Git)          echo -e "${GRAY}  → pkg install git${RESET}";            planned+=("Git") ;;
     TermuxVersion) echo -e "${GRAY}  → pkg update && pkg upgrade${RESET}"; skipped+=("TermuxVersion") ;;
+    DpkgLock)          echo -e "${GRAY}  → rm -f \${PREFIX}/var/lib/dpkg/lock${RESET}"; planned+=("DpkgLock") ;;
+    DpkgStatusDB)      echo -e "${GRAY}  → cp status-old status && dpkg --configure -a${RESET}"; planned+=("DpkgStatusDB") ;;
+    DpkgHalfInstalled) echo -e "${GRAY}  → dpkg --configure -a && apt-get install -f -y${RESET}"; planned+=("DpkgHalfInstalled") ;;
+    DpkgReinstRequired) echo -e "${GRAY}  → pkg reinstall <flagged packages>${RESET}"; planned+=("DpkgReinstRequired") ;;
+    DpkgBrokenDeps)    echo -e "${GRAY}  → apt-get install -f -y${RESET}"; planned+=("DpkgBrokenDeps") ;;
+    DpkgMissingFilesList) echo -e "${GRAY}  → pkg reinstall <packages with missing .list>${RESET}"; planned+=("DpkgMissingFilesList") ;;
+    DpkgFileConflicts) echo -e "${GRAY}  → apt-get install -f -y${RESET}"; planned+=("DpkgFileConflicts") ;;
     *)            echo -e "${GRAY}  → $(t L_FIX_NO_HANDLER) $key${RESET}"; skipped+=("$key") ;;
   esac
   echo

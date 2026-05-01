@@ -5,10 +5,24 @@ All notable changes to TDOC will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+## [2.1.0] — 2026-05-01
 
-## [Unreleased]
-- Planned features
-- Documentation updates
+### Added
+- **modules/dpkg.sh**: New dpkg health scan module. Detects 7 dpkg/apt error classes:
+  - Stale lock file (DpkgLock)
+  - Missing or corrupt status database (DpkgStatusDB)
+  - Half-installed / half-configured packages (DpkgHalfInstalled)
+  - reinst-required / ghost packages (DpkgReinstRequired)
+  - Broken / unmet dependencies (DpkgBrokenDeps)
+  - Packages with missing files list (DpkgMissingFilesList)
+  - File conflicts between packages (DpkgFileConflicts)
+- **core/fix_dpkg.sh**: Fix handlers for all 7 dpkg issues — manual, auto, and preview modes.
+- **lang/en.sh** + **lang/id.sh**: 60+ new language keys for all dpkg scan/fix/explain strings.
+- **core/ai_explain.sh**: Static explanations for all 7 dpkg issue types (causes, how-it-works, recommended fix).
+- **core/explain.sh**: Wired dpkg keys into the explanation runner.
+- **core/fix_preview.sh**: Preview actions for all dpkg fix types.
+
+---
 
 ---
 

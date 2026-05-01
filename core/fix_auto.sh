@@ -5,6 +5,7 @@
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/report.sh"
 source "$TDOC_ROOT/core/i18n.sh"
+source "$TDOC_ROOT/core/fix_dpkg.sh"
 load_lang
 
 STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"

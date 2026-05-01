@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Termux-blue.svg?logo=Android)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg?logo=github)
 ![Version](https://img.shields.io/badge/version-2.0.0-blue.svg?logo=github)
-[![Downloads](https://img.shields.io/github/downloads/djunekz/tdoc/total?style=for-the-badge&logo=github)](https://github.com/djunekz/tdoc/releases)
+[![Downloads](https://img.shields.io/github/downloads/djunekz/tdoc/total?style=for-the-badge.svg&logo=github)](https://github.com/djunekz/tdoc/releases)
 
 ---
 
