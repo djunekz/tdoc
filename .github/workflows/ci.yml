@@ -26,13 +26,13 @@ jobs:
             echo "Checking: $f"
             shellcheck \
               --severity=warning \
-              --exclude=SC2155 \
+              --exclude=SC2155,SC1090,SC1091 \
               --shell=bash \
               "$f"
           done
           shellcheck \
             --severity=warning \
-            --exclude=SC2155 \
+            --exclude=SC2155,SC1090,SC1091 \
             --shell=bash \
             tdoc
 

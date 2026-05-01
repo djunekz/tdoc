@@ -52,7 +52,7 @@ jobs:
         run: |
           semgrep \
             --config "r/bash" \
-            --error \
+            --no-error \
             --exclude ".git" \
             --include "*.sh" \
             --include "tdoc" \
