@@ -26,6 +26,7 @@ print_help() {
   echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"; echo
   echo -e "  ${BOLD}Diagnosis:${RESET}"
   echo -e "  ${GREEN}tdoc scan${RESET}                  $(t L_SCAN_HEADER)"
+  echo -e "  ${GREEN}tdoc diagnose [error]${RESET}      $(t L_DIAG_HEADER)"
   echo -e "  ${GREEN}tdoc status${RESET}                $(t L_STATUS_HEADER)"
   echo -e "  ${GREEN}tdoc explain${RESET}               $(t L_EXPLAIN_HEADER)"
   echo -e "  ${GREEN}tdoc check <pkg>${RESET}           $(t L_CHECK_HEADER)"
@@ -80,6 +81,7 @@ case "$cmd" in
       *) echo "Usage:"; echo "  tdoc doctor --json | --json-ai | --live [seconds]" ;;
     esac ;;
   explain)   source "$TDOC_ROOT/core/explain.sh" ;;
+  diagnose)  shift; source "$TDOC_ROOT/core/diagnose.sh" "$@" ;;
   report)    cat "${PREFIX}/var/lib/tdoc/state.env" 2>/dev/null || echo "$(t L_STATUS_NO_STATE)" ;;
   history)   source "$TDOC_ROOT/core/history.sh" ;;
   check)     PKG="${2:-}"; source "$TDOC_ROOT/core/check.sh" "$PKG" ;;
