@@ -1,0 +1,141 @@
+name: "🐞 Bug Report"
+description: "Report a bug or unexpected behavior in TDOC"
+title: "[BUG] "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+        Please fill out the sections below as completely as possible.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Bug"
+      description: "A clear and concise description of what the bug is."
+      placeholder: "When I run `tdoc fix --auto`, it crashes with..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Step-by-step instructions to reproduce the behavior."
+      value: |
+        1. Run command: `tdoc ...`
+        2. Observe behavior
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Behavior"
+      description: "What did you expect to happen?"
+      placeholder: "I expected TDOC to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Screenshots / Logs"
+      description: "Paste any relevant terminal output, error messages, or screenshots."
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: tdoc_version
+    attributes:
+      label: "TDOC Version"
+      description: "Run `tdoc version` and paste the output."
+      placeholder: "e.g. 2.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: termux_version
+    attributes:
+      label: "Termux Version"
+      description: "Run `termux-info` or check your Termux app version."
+      placeholder: "e.g. 0.118.0"
+    validations:
+      required: true
+
+  - type: input
+    id: android_version
+    attributes:
+      label: "Android Version"
+      placeholder: "e.g. Android 13"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: "Device"
+      placeholder: "e.g. Samsung Galaxy A52"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: affected_command
+    attributes:
+      label: "Affected Command"
+      description: "Which TDOC command triggered the bug?"
+      options:
+        - "tdoc scan"
+        - "tdoc fix"
+        - "tdoc fix --auto"
+        - "tdoc fix --preview"
+        - "tdoc check"
+        - "tdoc history"
+        - "tdoc benchmark"
+        - "tdoc doctor --live"
+        - "tdoc doctor --json"
+        - "tdoc security"
+        - "tdoc lang"
+        - "tdoc status"
+        - "tdoc explain"
+        - "install.sh"
+        - "Other"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: "Display Language"
+      description: "Which language were you using?"
+      options:
+        - "en (English)"
+        - "id (Bahasa Indonesia)"
+        - "Other / Not set"
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Any other relevant information, config, or environment details."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Pre-submission Checklist"
+      options:
+        - label: "I have searched existing issues and this is not a duplicate"
+          required: true
+        - label: "I am using the latest version of TDOC"
+          required: true
+        - label: "I have included TDOC version and environment details above"
+          required: true
