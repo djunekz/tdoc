@@ -190,13 +190,13 @@ TDOC is designed to be safe by default:
 
 TDOC does not modify system state unless explicitly instructed by the user.
 
-Please report security issues privately as described in [SECURITY.md](SECURITY.md). Do not post exploits publicly.
+Please report security issues privately as described in [SECURITY](SECURITY.md). Do not post exploits publicly.
 
 ---
 
 ## Contributing
 
-We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before submitting PRs or issues.
+We welcome contributions! Please read [CONTRIBUTING](CONTRIBUTING.md) and [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) before submitting PRs or issues.
 
 - Fork the repository
 - Create a descriptive branch name
@@ -210,12 +210,12 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [CO
 TDOC is licensed under the **MIT License**.
 
 For commercial or proprietary use, a separate commercial license is available.  
-See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md).
+See [COMMERCIAL_LICENSE](COMMERCIAL_LICENSE.md).
 
 ---
 
 ## Contact
 
 TDOC Project Team
-- 📧 djunekz@protonmail.com
-- 🌐 GitHub: https://github.com/djunekz/tdoc
+- 📧 [Contact Support](gab288.gab288@passinbox.com)
+- 🌐 GitHub: [TDOC - Termux Doctor](https://github.com/djunekz/tdoc)
