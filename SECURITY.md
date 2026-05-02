@@ -21,8 +21,8 @@ If you discover a security issue in TDOC, **please do NOT open a public issue**.
 
 Instead, report it responsibly using one of the following methods:
 
-📧 **Email:** djunekz@protonmail.com
-📌 **Subject:** `[SECURITY] Vulnerability Report`
+📧 **Email:** gab288.gab288@passinbox.com
+📌 **Subject:** `[SECURITY] Vulnerability Report TDOC`
 
 Please include as much information as possible:
 - Description of the vulnerability
@@ -65,4 +65,4 @@ We kindly ask security researchers to practice responsible disclosure and give u
 
 ## Contact
 For any security-related concerns, contact:
-📧 djunekz@protonmail.com
+📧 [Email Support](gab288.gab288@passinbox.com)
