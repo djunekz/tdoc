@@ -65,7 +65,7 @@ jobs:
           echo "archive=${ARCHIVE}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c062e08bd532815e2082a7e09cf0de62294e63c4
         with:
           name: "Termux-Doctor ${{ steps.version.outputs.version }}"
           body_path: release_notes.txt
