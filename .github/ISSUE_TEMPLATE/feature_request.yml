@@ -1,0 +1,94 @@
+name: "✨ Feature Request"
+description: "Suggest a new feature or improvement for TDOC"
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature!
+        Please describe your idea as clearly as possible so we can evaluate it.
+
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: "Describe the Feature"
+      description: "A clear and concise description of what you want to happen."
+      placeholder: "I want TDOC to be able to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: "Use Case / Problem"
+      description: "What problem does this solve? Why would this be useful?"
+      placeholder: "Currently, when I try to... I have to manually..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: "Feature Category"
+      description: "Which area of TDOC does this relate to?"
+      options:
+        - "Scan / Diagnosis"
+        - "Fix / Auto-fix"
+        - "Report / History"
+        - "Benchmark / Monitoring"
+        - "Security"
+        - "Internationalization (i18n)"
+        - "Plugin System"
+        - "CLI / UX"
+        - "CI / Workflows"
+        - "Documentation"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe a possible implementation or approach. (Optional)"
+      placeholder: "One way to implement this would be..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "Have you considered any alternative solutions or workarounds?"
+    validations:
+      required: false
+
+  - type: input
+    id: tdoc_version
+    attributes:
+      label: "TDOC Version"
+      description: "Run `tdoc version` and paste the output."
+      placeholder: "e.g. 2.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Add any other context, mockups, or examples here."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Pre-submission Checklist"
+      options:
+        - label: "I have searched existing issues and this is not a duplicate"
+          required: true
+        - label: "This feature is relevant to Termux / Android users"
+          required: true
