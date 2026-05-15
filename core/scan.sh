@@ -72,3 +72,21 @@ echo -e "${RED}$(t L_BROKEN_COUNT)  : $broken${RESET}"
 echo -e "${CYAN}$BORDER${RESET}"
 echo
 echo -e "✔ $(t L_SCAN_DONE) — $(t L_SCAN_HINT)"
+
+_tdoc_is_project_dir() {
+  local markers=(".git" "package.json" "Cargo.toml" "setup.py" "pyproject.toml"
+    "requirements.txt" "Makefile" "Dockerfile" "docker-compose.yml"
+    "docker-compose.yaml" ".github" "go.mod" "composer.json")
+  for m in "${markers[@]}"; do
+    [[ -e "$PWD/$m" ]] && return 0
+  done
+  return 1
+}
+
+if _tdoc_is_project_dir; then
+  echo
+  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+  echo -e "${CYAN}📁 $(t L_RS_HEADER_PROJECT): ${BOLD}${PWD}${RESET}"
+  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+  source "$TDOC_ROOT/core/repo_scan.sh"
+fi

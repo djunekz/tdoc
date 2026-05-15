@@ -6,6 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.2.0] — 2026-05-15
+
+### Added
+- **`core/repo_scan.sh`** — New multi-language code scanner engine (659 lines). Scans an entire project folder for bugs, syntax errors, deprecated patterns, traceback logs, and common misconfigurations across all major file types:
+  - **Python** (`.py`) — `python3 -m py_compile`: detects `SyntaxError`, `IndentationError`
+  - **Shell / Bash** (`.sh`, `.bash`, shebang-detected executables) — `bash -n` / `sh -n`
+  - **Perl** (`.pl`) — `perl -c` (skipped gracefully if Perl not installed)
+  - **JavaScript** (`.js`, `.mjs`, `.cjs`) — `node --check`; TypeScript (`.ts`) via `tsc --noEmit` if available
+  - **YAML** (`.yml`, `.yaml`) — `PyYAML` safe-load; extra lint for GitHub Actions workflows (deprecated `set-output`, `save-state`, unpinned `actions/checkout`, missing `on:` / `jobs:`)
+  - **JSON** (`.json`) — `json.load` via Python or `require()` via Node
+  - **TOML** (`.toml`) — `tomllib` (Python 3.11+) / `tomli` fallback
+  - **Dockerfile** — built-in lint: `FROM` missing, `MAINTAINER` deprecated, `ADD` vs `COPY`, `apt-get install` without `-y`, `sudo` inside container, invalid `EXPOSE` port
+  - **`requirements.txt`** — unpinned dependencies, suspicious characters
+  - **`.env`** — `KEY=VALUE` format validation, potential secrets committed (detects `SECRET`, `TOKEN`, `PASSWORD`, `API_KEY`, `PRIVATE` keys with non-placeholder values)
+  - **Makefile** — TAB-vs-spaces enforcement on recipe lines
+  - **Markdown** (`.md`) — unclosed YAML frontmatter, empty `![]()` image refs, empty `[]()` hyperlinks
+  - **Log files** (`.log`, `.out`, `.err`) — pattern scan for 20+ traceback/error signatures: Python `Traceback`, `SyntaxError`, `NameError`, Rust `panic:`, `SIGSEGV`, `npm ERR!`, `command not found`, etc.
+  - **Rust** — `cargo check` invoked if `Cargo.toml` exists at scan root and `cargo` is available
+- **`tdoc repo-scan`** — New top-level command wired in the main `tdoc` entrypoint. Scans the current working directory if it looks like a project folder; falls back to `$HOME` otherwise.
+- **Auto project detection in `tdoc scan`** — After the standard Termux system scan completes, `scan.sh` now checks whether `$PWD` contains any project marker (`.git`, `Dockerfile`, `package.json`, `Cargo.toml`, `setup.py`, `pyproject.toml`, `requirements.txt`, `Makefile`, `docker-compose.yml`, `.github`, `go.mod`, `composer.json`). If a marker is found, `repo_scan.sh` is automatically sourced and the full code scan runs in the same session — zero extra commands needed.
+- **`lang/en.sh`** + **`lang/id.sh`** — 44 new language keys each (`L_RS_*`) covering all `repo_scan.sh` output. Additionally, `L_DIAG_*` keys extended with: `L_DIAG_PASTE_MULTILINE_HINT`, `L_DIAG_MORE_LINES`, `L_DIAG_AI_ANALYZING`, `L_DIAG_AI_RESULT`, `L_DIAG_AI_FAILED`, `L_DIAG_FALLBACK`, `L_DIAG_NO_ARGS`, `L_DIAG_NO_ARGS_HINT`, `L_DIAG_FILE_NOT_FOUND`, `L_DIAG_READ_FROM`. All output fully bilingual EN/ID.
+- **`install.sh`** — Updated post-install message to list `tdoc repo-scan`.
+- **`man/tdoc.1`** — Man page updated with full `repo-scan` and updated `diagnose` command documentation.
+
+### Changed
+- **`core/version.sh`** — Rewritten to read all values from `VERSION` file at `$TDOC_ROOT/VERSION` instead of hardcoding them. Uses `source` on the `KEY=VALUE` file and maps `VERSION` → `TDOC_VERSION`, `CODENAME` → `TDOC_CODENAME`, `BUILD_DATE` → `TDOC_BUILD_DATE`. Includes graceful fallback to `"unknown"` / empty strings if the file is missing. `TDOC_NAME` remains set here as it is not a release artifact.
+- **`VERSION`** — Format changed from a bare version number (`2.1.1`) to structured `KEY=VALUE` pairs:
+  ```
+  VERSION=2.2.0
+  CODENAME=Diagnostix
+  BUILD_DATE=2026-05-15
+  ```
+  This file is now the **single source of truth** for all version metadata. Updating a release only requires editing `VERSION` — no changes to `version.sh`, `ui_version.sh`, or any other file needed.
+
+- **`core/ui_version.sh`** — Removed 8 duplicate color variable declarations (`BOLD`, `DIM`, `CYAN`, `GREEN`, `YELLOW`, `RESET`, `BORDER`, `ICON_INFO`) that were redefined locally instead of sourcing `ui.sh`. Now sources `ui.sh` like every other core file, ensuring color consistency if `ui.sh` is ever updated. Border width corrected to 42 characters matching the rest of TDOC. `Codename` and `Build` lines are conditionally shown — only printed when the value is non-empty, so a minimal `VERSION` file with only `VERSION=x.y.z` still renders cleanly.
+- **`install.sh`** — Added explicit copy of `VERSION` file to `$INSTALL_DIR/VERSION` via `install -Dm644`. Previously `VERSION` was never copied during installation, causing `version.sh` to fall back to hardcoded values at runtime and `tdoc version` to always show the old version even after an update. Added `tdoc diagnose` and `tdoc diagnose -f <log>` to the post-install commands list.
+- **`core/diagnose.sh`** — Fully rewritten. Previous version accepted error text as CLI arguments (`tdoc diagnose <text>`), which caused bash to crash on special characters like `![]()` before the script even started. New behaviour:
+  - **Interactive multi-line paste** (default): user runs `tdoc diagnose`, pastes any number of lines freely (traceback, `tdoc repo-scan` output, log snippet, etc.), submits with an empty line.
+  - **File mode** (`tdoc diagnose -f <path>`): reads error text directly from a log file.
+  - **Argument guard**: if arguments are passed, script rejects them with a friendly explanation and falls through to interactive mode — no more bash crashes.
+  - **AI engine**: when internet is available, the full error text is sent to Claude (Anthropic API, `claude-sonnet-4-20250514`) and returns a structured diagnosis: `🔍 DIAGNOSIS`, `📌 ROOT CAUSE`, `🔧 HOW TO FIX`, `💡 PREVENTION` — each with actual commands to run.
+  - **Offline fallback**: when AI is unavailable, falls back to the original 40+ static pattern matcher (`_diag_match_static`) with `ai_explain` output and fix offer. No degradation in offline environments.
+- **`core/scan.sh`** — Added `_tdoc_is_project_dir()` helper and post-scan hook at the end of the scan flow. No changes to existing scan logic or state file format.
+- **`core/repo_scan.sh`** — Shell scanner default changed from `sh -n` to `bash -n` for `.sh` files without an explicit `#!/bin/sh` shebang. Fixes false-positive syntax errors on bash-syntax files (arrays, `[[ ]]`, `local`) that have no shebang. `sh -n` is now only used when shebang is explicitly `#!/bin/sh` or `#!/usr/bin/env sh`. Section separator width fixed to 42 characters, matching the header border.
+- **`tdoc` entrypoint** — Help menu updated: `tdoc diagnose [error]` replaced with `tdoc diagnose` and `tdoc diagnose -f <file>` entries reflecting the new interface. `tdoc repo-scan` added to the Diagnosis section.
+
+### Fixed
+- **`install.sh` — `VERSION` not copied**: `tdoc version` always showed the old hardcoded version after installation because `VERSION` was never copied to `$INSTALL_DIR`. Fixed by adding `install -Dm644 VERSION "$INSTALL_DIR/VERSION"`.
+- **`core/ui_version.sh` — duplicate color declarations**: Colors were redeclared locally instead of using `ui.sh`, causing potential inconsistency. Now sources `ui.sh` directly.
+- **`core/repo_scan.sh` — shell scanner false positives**: Files using bash syntax (`[[ ]]`, arrays, `local`) without a shebang were incorrectly checked with `sh -n`, producing `Syntax error: "(" unexpected`. Now defaults to `bash -n`.
+- **`core/repo_scan.sh` — section line width**: Section separators were unbounded in length. Now capped at 42 characters with `printf "── %-36s ──"` to match the header border.
+
+---
+
 ## [2.1.1] — 2026-05-02
 
 ### Added

@@ -17,8 +17,42 @@ Termux package ecosystem.
 
 .SH COMMANDS
 .TP
-.B status
-Scan the system and display a human-readable status report.
+.B scan
+Run a full Termux system scan. If the current directory is a project folder
+(contains .git, Dockerfile, package.json, etc.), TDOC also automatically
+runs a full code scan on the repository.
+
+.TP
+.B repo-scan
+Scan the current project folder (or $HOME if not inside a project) for
+syntax errors, bugs, deprecated patterns, and traceback logs across all
+supported file types:
+.RS
+.IP \(bu 2
+\fBPython\fR (.py) — SyntaxError via py_compile
+.IP \(bu 2
+\fBShell/Bash\fR (.sh .bash) — syntax check via bash -n / sh -n
+.IP \(bu 2
+\fBPerl\fR (.pl) — syntax check via perl -c
+.IP \(bu 2
+\fBJavaScript\fR (.js .mjs) — syntax check via node --check
+.IP \(bu 2
+\fBYAML\fR (.yml .yaml) — parse check including GitHub Actions workflows
+.IP \(bu 2
+\fBJSON\fR (.json) — parse validation
+.IP \(bu 2
+\fBTOML\fR (.toml) — parse validation via tomllib
+.IP \(bu 2
+\fBDockerfile\fR — lint for deprecated instructions and common mistakes
+.IP \(bu 2
+\fBrequirements.txt\fR — unpinned deps and format errors
+.IP \(bu 2
+\fBMakefile\fR — TAB indentation enforcement
+.IP \(bu 2
+\fBMarkdown\fR (.md) — frontmatter and broken link detection
+.IP \(bu 2
+\fBLog files\fR (.log .out .err) — traceback/error pattern detection
+.RE
 
 .TP
 .B version

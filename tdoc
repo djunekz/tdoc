@@ -26,7 +26,9 @@ print_help() {
   echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"; echo
   echo -e "  ${BOLD}Diagnosis:${RESET}"
   echo -e "  ${GREEN}tdoc scan${RESET}                  $(t L_SCAN_HEADER)"
-  echo -e "  ${GREEN}tdoc diagnose [error]${RESET}      $(t L_DIAG_HEADER)"
+  echo -e "  ${GREEN}tdoc repo-scan${RESET}             $(t L_RS_HEADER_PROJECT)"
+  echo -e "  ${GREEN}tdoc diagnose${RESET}              $(t L_DIAG_HEADER)"
+  echo -e "  ${GREEN}tdoc diagnose -f <file>${RESET}    $(t L_DIAG_READ_FROM)"
   echo -e "  ${GREEN}tdoc status${RESET}                $(t L_STATUS_HEADER)"
   echo -e "  ${GREEN}tdoc explain${RESET}               $(t L_EXPLAIN_HEADER)"
   echo -e "  ${GREEN}tdoc check <pkg>${RESET}           $(t L_CHECK_HEADER)"
@@ -67,6 +69,7 @@ mkdir -p "${PREFIX}/var/lib/tdoc"
 case "$cmd" in
   version|-v|--version) source "$TDOC_ROOT/core/ui_version.sh"; tdoc_version_ui ;;
   scan)     source "$TDOC_ROOT/core/scan.sh" ;;
+  repo-scan) source "$TDOC_ROOT/core/repo_scan.sh" ;;
   status)
     [[ -f "$TDOC_ROOT/core/status.sh" ]] || { echo "$(t L_STATUS_NO_STATE)"; exit 1; }
     source "$TDOC_ROOT/core/status.sh" ;;

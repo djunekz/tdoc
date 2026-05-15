@@ -11,7 +11,7 @@ BIN_PATH="$PREFIX_PATH/bin/tdoc"
 MAN_PAGE="$PREFIX_PATH/share/man/man1/tdoc.1"
 USER_DIR="$HOME/.tdoc"
 
-echo "🗑️  Uninstalling TDOC..."
+echo "Uninstalling TDOC (Termux Doctor)..."
 
 # --- remove binary -----------------------------------------
 
