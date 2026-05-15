@@ -71,7 +71,7 @@ jobs:
 
       - name: Check VERSION file matches latest CHANGELOG entry
         run: |
-          VERSION=$(tr -d '[:space:]' < VERSION)
+          VERSION=$(grep '^VERSION=' VERSION | cut -d'=' -f2 | tr -d '[:space:]')
           CHANGELOG_VERSION=$(grep -m1 "^## \[" CHANGELOG.md | sed 's/## \[\(.*\)\].*/\1/')
 
           echo "VERSION file   : $VERSION"
@@ -113,7 +113,7 @@ jobs:
 
       - name: Build tar.gz and verify
         run: |
-          VERSION=$(tr -d '[:space:]' < VERSION)
+          VERSION=$(grep '^VERSION=' VERSION | cut -d'=' -f2 | tr -d '[:space:]')
           ARCHIVE="tdoc-v${VERSION}.tar.gz"
 
           tar -czf "$ARCHIVE" \
