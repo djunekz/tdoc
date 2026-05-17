@@ -278,8 +278,16 @@ See [COMMERCIAL_LICENSE](COMMERCIAL_LICENSE.md).
 
 ---
 
+## Keywords
+
+termux fix broken packages · termux repair tool · termux diagnostic CLI ·
+android terminal doctor · bash system scanner · termux package manager fix ·
+termux environment check · CLI linter android · tdoc termux · shell script debugger android
+
+---
+
 ## Contact
 
 TDOC Project Team
-- 📧 [Contact Support](gab288.gab288@passinbox.com)
+- 📧 Email Contact Support: gab288.gab288@passinbox.com
 - 🌐 GitHub: [TDOC - Termux Doctor](https://github.com/djunekz/tdoc)
