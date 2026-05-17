@@ -1,10 +1,12 @@
 # TDOC — Termux Doctor
 
-![License](https://img.shields.io/badge/license-MIT-green.svg?logo=github)
-![Platform](https://img.shields.io/badge/platform-Termux-blue.svg?logo=Android)
-![Status](https://img.shields.io/badge/status-stable-brightgreen.svg?logo=github)
-![Version](https://img.shields.io/badge/version-2.2.0-blue.svg?logo=github)
-[![Downloads](https://img.shields.io/github/downloads/djunekz/tdoc/total?style=for-the-badge.svg&logo=github)](https://github.com/djunekz/tdoc/releases)
+![License](https://img.shields.io/badge/license-MIT-green.svg?logo=github)<br>
+![Platform](https://img.shields.io/badge/platform-Termux-blue.svg?logo=Android)<br>
+![Status](https://img.shields.io/badge/status-stable-brightgreen.svg?logo=github)<br>
+[![Version](https://img.shields.io/github/v/release/djunekz/tdoc)](https://github.com/djunekz/tdoc/releases/latest)<br>
+[![Downloads](https://img.shields.io/github/downloads/djunekz/tdoc/total?style=for-the-badge.svg&logo=github)](https://github.com/djunekz/tdoc/releases)<br>
+[![Shell](https://img.shields.io/badge/language-Bash%20Shell-4EAA25?style=for-the-badge.svg&logo=gnu-bash)](https://github.com/djunekz/tdoc)<br>
+[![GitHub Stars](https://img.shields.io/github/stars/djunekz/tdoc)](https://github.com/djunekz/tdoc/stargazers)<br>
 
 ---
 
