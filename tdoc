@@ -26,9 +26,10 @@ print_help() {
   echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"; echo
   echo -e "  ${BOLD}Diagnosis:${RESET}"
   echo -e "  ${GREEN}tdoc scan${RESET}                  $(t L_SCAN_HEADER)"
-  echo -e "  ${GREEN}tdoc repo-scan${RESET}             $(t L_RS_HEADER_PROJECT)"
-  echo -e "  ${GREEN}tdoc diagnose${RESET}              $(t L_DIAG_HEADER)"
-  echo -e "  ${GREEN}tdoc diagnose -f <file>${RESET}    $(t L_DIAG_READ_FROM)"
+  echo -e "  ${GREEN}tdoc repo-scan [path]${RESET}      $(t L_REPO_SCAN_HEADER)"
+  echo -e "  ${GREEN}tdoc diagnose <error>${RESET}      $(t L_DIAG_HEADER)"
+  echo -e "  ${GREEN}tdoc diagnose -f <file>${RESET}    $(t L_DIAG_HEADER)"
+  echo -e "  ${GREEN}tdoc diagnose --last${RESET}       $(t L_DIAG_FROM_LAST_SCAN)"
   echo -e "  ${GREEN}tdoc status${RESET}                $(t L_STATUS_HEADER)"
   echo -e "  ${GREEN}tdoc explain${RESET}               $(t L_EXPLAIN_HEADER)"
   echo -e "  ${GREEN}tdoc check <pkg>${RESET}           $(t L_CHECK_HEADER)"
@@ -39,9 +40,9 @@ print_help() {
   echo -e "  ${GREEN}tdoc fix --auto${RESET}            $(t L_FIX_AUTO_HEADER)"
   echo
   echo -e "  ${BOLD}Report:${RESET}"
-  echo -e "  ${GREEN}tdoc checkup${RESET}               $(t L_CHECKUP_HEADER)"
-  echo -e "  ${GREEN}tdoc checkup --save${RESET}        $(t L_CHECKUP_SAVED)"
-  echo -e "  ${GREEN}tdoc checkup --json${RESET}        $(t L_CHECKUP_JSON_HINT)"
+  echo -e "  ${GREEN}tdoc checkup${RESET}               Full Checkup Report"
+  echo -e "  ${GREEN}tdoc checkup --save${RESET}        Save report to ~/.tdoc/checkup_*.txt"
+  echo -e "  ${GREEN}tdoc checkup --json${RESET}        Output report as JSON"
   echo -e "  ${GREEN}tdoc history${RESET}               $(t L_HISTORY_HEADER)"
   echo -e "  ${GREEN}tdoc doctor --json${RESET}         Doctor JSON"
   echo -e "  ${GREEN}tdoc doctor --json-ai${RESET}      Doctor JSON + AI"
@@ -68,12 +69,12 @@ mkdir -p "${PREFIX}/var/lib/tdoc"
 
 case "$cmd" in
   version|-v|--version) source "$TDOC_ROOT/core/ui_version.sh"; tdoc_version_ui ;;
-  scan)     source "$TDOC_ROOT/core/scan.sh" ;;
-  repo-scan) source "$TDOC_ROOT/core/repo_scan.sh" ;;
+  scan)      source "$TDOC_ROOT/core/scan.sh" ;;
+  repo-scan) shift; source "$TDOC_ROOT/core/repo_scan.sh" "${1:-$PWD}" ;;
+  diagnose)  shift; source "$TDOC_ROOT/core/diagnose.sh" "$@" ;;
   status)
     [[ -f "$TDOC_ROOT/core/status.sh" ]] || { echo "$(t L_STATUS_NO_STATE)"; exit 1; }
     source "$TDOC_ROOT/core/status.sh" ;;
-  diagnose) shift; source "$TDOC_ROOT/core/diagnose.sh" "$@" ;;
   fix)
     source "$TDOC_ROOT/core/scan.sh" > /dev/null 2>&1 || true
     case "${2:-}" in
@@ -88,19 +89,19 @@ case "$cmd" in
       --live)    INTERVAL="${3:-60}"; source "$TDOC_ROOT/core/watch.sh" "$INTERVAL" ;;
       *) echo "Usage:"; echo "  tdoc doctor --json | --json-ai | --live [seconds]" ;;
     esac ;;
-  watch)    INTERVAL="${2:-60}"; source "$TDOC_ROOT/core/watch.sh" "$INTERVAL" ;;
-  checkup)  shift; source "$TDOC_ROOT/core/checkup.sh" "${1:-}" ;;
-  explain)  source "$TDOC_ROOT/core/explain.sh" ;;
-  report)   cat "${PREFIX}/var/lib/tdoc/state.env" 2>/dev/null || echo "$(t L_STATUS_NO_STATE)" ;;
-  history)  source "$TDOC_ROOT/core/history.sh" ;;
-  check)    PKG="${2:-}"; source "$TDOC_ROOT/core/check.sh" "$PKG" ;;
+  watch)     INTERVAL="${2:-60}"; source "$TDOC_ROOT/core/watch.sh" "$INTERVAL" ;;
+  checkup)   shift; source "$TDOC_ROOT/core/checkup.sh" "${1:-}" ;;
+  explain)   source "$TDOC_ROOT/core/explain.sh" ;;
+  report)    cat "${PREFIX}/var/lib/tdoc/state.env" 2>/dev/null || echo "$(t L_STATUS_NO_STATE)" ;;
+  history)   source "$TDOC_ROOT/core/history.sh" ;;
+  check)     PKG="${2:-}"; source "$TDOC_ROOT/core/check.sh" "$PKG" ;;
   benchmark) source "$TDOC_ROOT/core/benchmark.sh" ;;
   security)
     case "${2:-}" in
       --json) source "$TDOC_ROOT/core/repo_security_json.sh" ;;
       *)      source "$TDOC_ROOT/core/repo_security_ui.sh" ;;
     esac ;;
-  lang)     shift; source "$TDOC_ROOT/core/lang_cmd.sh" "$@" ;;
+  lang)      shift; source "$TDOC_ROOT/core/lang_cmd.sh" "$@" ;;
   update)
     echo "$(t L_UPDATE_MSG)"; echo
     echo "  $(t L_UPDATE_FROM_GITHUB):"; echo "    git -C \$PREFIX/lib/tdoc pull"; echo

@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# ============================================================
-# TDOC — diagnose.sh
-# ============================================================
-
-set -o nounset
-set -o pipefail
+# ==============================
+# TDOC — diagnose
+# Match a raw error message / repo-scan output to a
+# known issue, explain it, and offer to fix it.
+#
+# Usage:
+#   tdoc diagnose "error message"   ← single-line arg
+#   tdoc diagnose                   ← interactive multi-line prompt
+#   tdoc diagnose --last            ← diagnose last repo-scan output
+# ==============================
 
 : "${TDOC_ROOT:?TDOC_ROOT is not set}"
 source "$TDOC_ROOT/core/ui.sh"
@@ -13,156 +17,163 @@ source "$TDOC_ROOT/core/ai_explain.sh"
 load_lang
 
 STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"
-_DIAG_AI_AVAILABLE=false
+REPO_SCAN_STATE="${HOME}/.tdoc/repo_scan_last.txt"
 
-_diag_check_ai() {
-  command -v curl >/dev/null 2>&1 || return 1
-  command -v python3 >/dev/null 2>&1 || return 1
-  curl -sf --max-time 3 "https://api.anthropic.com" -o /dev/null 2>/dev/null && return 0
-  return 1
-}
+BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 _diag_header() {
   echo
-  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+  echo -e "${CYAN}${BORDER}${RESET}"
   echo -e "${CYAN}🩺 $(t L_DIAG_HEADER)${RESET}"
-  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+  echo -e "${CYAN}${BORDER}${RESET}"
   echo
 }
 
-_diag_read_input() {
-  echo -e "${BOLD}$(t L_DIAG_PASTE_PROMPT)${RESET}"
-  echo -e "${DIM}$(t L_DIAG_PASTE_MULTILINE_HINT)${RESET}"
-  echo
+_diag_match_line() {
+  local s="$1"
 
-  local lines=()
-  local line
-  while IFS= read -r line; do
-    [[ -z "$line" ]] && break
-    lines+=("$line")
-  done
+  # ── repo-scan specific ──────────────────────────────────────────────────────
+  echo "$s" | grep -qiE "unpinned depend|consider pinning|unpinned.*requirements|unpinned.*package\.json" \
+    && echo "UnpinnedDep" && return
+  echo "$s" | grep -qiE "unreferenced.*function|defined.*never called|unref.*func" \
+    && echo "UnrefFunc" && return
+  echo "$s" | grep -qiE "unreferenced.*module|never sourced|unref.*module" \
+    && echo "UnrefModule" && return
+  echo "$s" | grep -qiE "undefined.*call|called.*never defined|undef.*call" \
+    && echo "UndefCall" && return
+  echo "$s" | grep -qiE "broken.*link|\.md.*broken link" \
+    && echo "BrokenMdLink" && return
+  echo "$s" | grep -qiE "traceback|error:|exception:|fatal|segmentation fault" \
+    && echo "Traceback" && return
+  echo "$s" | grep -qiE "invalid json" \
+    && echo "InvalidJSON" && return
+  echo "$s" | grep -qiE "invalid yaml|yaml.*error|mapping.*values.*not allowed" \
+    && echo "InvalidYAML" && return
+  echo "$s" | grep -qiE "invalid toml" \
+    && echo "InvalidTOML" && return
+  echo "$s" | grep -qiE "syntaxerror|indentationerror|syntax.*error.*\.py|\.py.*line [0-9]" \
+    && echo "PythonSyntax" && return
+  echo "$s" | grep -qiE "makefile.*space|recipe.*separator|missing separator" \
+    && echo "MakefileSpace" && return
 
-  printf '%s\n' "${lines[@]}"
-}
-
-_diag_match_static() {
-  local input_lower="$1"
-
-  echo "$input_lower" | grep -qE \
-    "dpkg was interrupted|you must manually run.*dpkg|run.*dpkg.*--configure|sub-process.*dpkg.*returned error" \
+  # ── dpkg / apt ──────────────────────────────────────────────────────────────
+  echo "$s" | grep -qiE "dpkg was interrupted|you must manually run.*dpkg|run.*dpkg.*--configure" \
     && echo "DpkgHalfInstalled" && return
-
-  echo "$input_lower" | grep -qE \
-    "unable to lock|could not get lock|lock.*var/lib/dpkg|lock.*apt/lists|another process.*using|waiting for lock" \
+  echo "$s" | grep -qiE "sub-process.*dpkg.*returned error|sub-process.*usr/bin/dpkg|dpkg returned error code" \
+    && echo "DpkgHalfInstalled" && return
+  echo "$s" | grep -qiE "unable to lock|could not get lock|lock.*var/lib/dpkg|another process.*using" \
     && echo "DpkgLock" && return
-
-  echo "$input_lower" | grep -qE \
-    "reinst-required|reinstallation required|must be reinstalled" \
+  echo "$s" | grep -qiE "half-installed|half-configured" \
+    && echo "DpkgHalfInstalled" && return
+  echo "$s" | grep -qiE "reinst-required|reinstallation required|ghost package" \
     && echo "DpkgReinstRequired" && return
-
-  echo "$input_lower" | grep -qE \
-    "files list.*missing|dpkg.*info.*list" \
+  echo "$s" | grep -qiE "warning.*files list.*missing|files list file.*for package" \
     && echo "DpkgMissingFilesList" && return
-
-  echo "$input_lower" | grep -qE \
-    "dpkg.*status.*corrupt|status.*database.*corrupt|cannot open.*dpkg/status" \
+  echo "$s" | grep -qiE "dpkg.*status.*corrupt|status.*database.*corrupt|cannot open.*dpkg/status" \
     && echo "DpkgStatusDB" && return
-
-  echo "$input_lower" | grep -qE \
-    "unmet dependencies|dependency problems|broken packages|apt-get install -f" \
+  echo "$s" | grep -qiE "unmet dep|dependency problems|broken packages|has unmet dep|apt-get install -f" \
     && echo "DpkgBrokenDeps" && return
-
-  echo "$input_lower" | grep -qE \
-    "trying to overwrite|conflicts with.*package|file.*owned by" \
+  echo "$s" | grep -qiE "trying to overwrite|conflicts with.*package|file.*owned by" \
     && echo "DpkgFileConflicts" && return
 
-  echo "$input_lower" | grep -qE \
-    "no module named|modulenotfounderror|importerror|python.*command not found|python3.*not found|pip.*not found" \
+  # ── tools ───────────────────────────────────────────────────────────────────
+  echo "$s" | grep -qiE "python.*command not found|python3.*not found|no module named|modulenotfounderror|importerror" \
     && echo "Python" && return
-
-  echo "$input_lower" | grep -qE \
-    "cannot find module|node.*command not found|npm.*not found|error.*require" \
+  echo "$s" | grep -qiE "node.*command not found|nodejs.*not found|npm.*not found|cannot find module" \
     && echo "NodeJS" && return
-
-  echo "$input_lower" | grep -qE \
-    "git.*command not found|not a git repo|fatal.*not a git" \
+  echo "$s" | grep -qiE "git.*command not found|git.*not found|not a git repo|fatal.*not a git" \
     && echo "Git" && return
-
-  echo "$input_lower" | grep -qE \
-    "permission denied.*storage|termux-setup-storage|/storage/shared.*no such" \
+  echo "$s" | grep -qiE "permission denied.*storage|cannot.*write.*storage|termux-setup-storage" \
     && echo "Storage" && return
-
-  echo "$input_lower" | grep -qE \
-    "failed to fetch|could not resolve.*mirror|404.*not found.*repo|no release file|gpg error|sources.list" \
+  echo "$s" | grep -qiE "failed to fetch|could not resolve.*mirrors|404.*not found.*repo|gpg error|sources\.list" \
     && echo "Repository" && return
 
   echo "Unknown"
 }
 
-_diag_ai_analyze() {
-  local error_text="$1"
-  local lang_code="${TDOC_LANG:-en}"
+_diag_explain_repo() {
+  local issue="$1"
+  local CAUSES="$(t L_AI_COMMON_CAUSES)"
+  local HOW="$(t L_AI_HOW_IT_WORKS)"
+  local REC="$(t L_AI_RECOMMENDED)"
 
-  local lang_instruction="Respond in English."
-  [[ "$lang_code" == "id" ]] && lang_instruction="Jawab dalam Bahasa Indonesia."
-
-  local system_prompt="You are TDOC, an expert Termux/Linux/shell environment diagnostic assistant. ${lang_instruction}
-
-Analyze the error message or warning text provided by the user. Your response must follow this EXACT format:
-
-🔍 DIAGNOSIS
-[One sentence: what this error means]
-
-- ROOT CAUSE
-[2-3 bullet points explaining why this happens]
-
-- HOW TO FIX
-[Numbered step-by-step fix commands, use code blocks with triple backticks for commands]
-
-- PREVENTION
-[1-2 tips to avoid this in the future]
-
-Rules:
-- Be concise and practical
-- Always include actual commands to run
-- If multiple errors are present, address the most critical one first then others
-- If the error is from TDOC repo-scan output (like 'Empty image reference' or 'Unclosed frontmatter'), explain what it means in context
-- Never say you cannot help"
-
-  local payload
-  payload=$(python3 -c "
-import json, sys
-system = sys.argv[1]
-error  = sys.argv[2]
-obj = {
-  'model': 'claude-sonnet-4-20250514',
-  'max_tokens': 1024,
-  'system': system,
-  'messages': [{'role': 'user', 'content': 'Diagnose this error:\n\n' + error}]
-}
-print(json.dumps(obj))
-" "$system_prompt" "$error_text" 2>/dev/null)
-
-  [[ -z "$payload" ]] && return 1
-
-  local response
-  response=$(curl -sf \
-    --max-time 30 \
-    -X POST "https://api.anthropic.com/v1/messages" \
-    -H "Content-Type: application/json" \
-    -H "anthropic-version: 2023-06-01" \
-    -d "$payload" 2>/dev/null)
-
-  [[ -z "$response" ]] && return 1
-
-  python3 -c "
-import json, sys
-try:
-    data = json.loads(sys.stdin.read())
-    print(data['content'][0]['text'])
-except:
-    sys.exit(1)
-" <<< "$response"
+  case "$issue" in
+    UnpinnedDep)
+      echo "🔍 $(t L_DIAG_UNPINNED_TITLE)"
+      echo; echo "$(t L_DIAG_UNPINNED_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_DIAG_UNPINNED_CAUSE1)"
+      echo "• $(t L_DIAG_UNPINNED_CAUSE2)"
+      echo; echo "$REC:"
+      echo "→ $(t L_DIAG_UNPINNED_FIX1)"
+      echo "→ $(t L_DIAG_UNPINNED_FIX2)"
+      ;;
+    UnrefFunc)
+      echo "🔍 $(t L_DIAG_UNREF_FUNC_TITLE)"
+      echo; echo "$(t L_DIAG_UNREF_FUNC_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_DIAG_UNREF_FUNC_CAUSE1)"
+      echo "• $(t L_DIAG_UNREF_FUNC_CAUSE2)"
+      echo; echo "$REC:"
+      echo "→ $(t L_DIAG_UNREF_FUNC_FIX)"
+      ;;
+    UnrefModule)
+      echo "🔍 $(t L_DIAG_UNREF_MOD_TITLE)"
+      echo; echo "$(t L_DIAG_UNREF_MOD_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_DIAG_UNREF_MOD_CAUSE1)"
+      echo "• $(t L_DIAG_UNREF_MOD_CAUSE2)"
+      echo; echo "$REC:"
+      echo "→ $(t L_DIAG_UNREF_MOD_FIX)"
+      ;;
+    UndefCall)
+      echo "🔍 $(t L_DIAG_UNDEF_CALL_TITLE)"
+      echo; echo "$(t L_DIAG_UNDEF_CALL_DESC)"
+      echo; echo "$CAUSES:"
+      echo "• $(t L_DIAG_UNDEF_CALL_CAUSE1)"
+      echo "• $(t L_DIAG_UNDEF_CALL_CAUSE2)"
+      echo; echo "$REC:"
+      echo "→ $(t L_DIAG_UNDEF_CALL_FIX)"
+      ;;
+    BrokenMdLink)
+      echo "🔍 $(t L_DIAG_MD_LINK_TITLE)"
+      echo; echo "$(t L_DIAG_MD_LINK_DESC)"
+      echo; echo "$REC:"; echo "→ $(t L_DIAG_MD_LINK_FIX)"
+      ;;
+    Traceback)
+      echo "🔍 $(t L_DIAG_TRACEBACK_TITLE)"
+      echo; echo "$(t L_DIAG_TRACEBACK_DESC)"
+      echo; echo "$REC:"; echo "→ $(t L_DIAG_TRACEBACK_FIX)"
+      ;;
+    PythonSyntax)
+      echo "🔍 $(t L_DIAG_PY_SYNTAX_TITLE)"
+      echo; echo "$(t L_DIAG_PY_SYNTAX_DESC)"
+      echo; echo "$REC:"; echo "→ python3 -m py_compile <file.py>"
+      ;;
+    InvalidJSON)
+      echo "🔍 $(t L_DIAG_JSON_TITLE)"
+      echo; echo "$(t L_DIAG_JSON_DESC)"
+      echo; echo "$REC:"; echo "→ python3 -m json.tool <file.json>"
+      ;;
+    InvalidYAML)
+      echo "🔍 $(t L_DIAG_YAML_TITLE)"
+      echo; echo "$(t L_DIAG_YAML_DESC)"
+      echo; echo "$REC:"; echo "→ python3 -c \"import yaml; yaml.safe_load(open('<file.yml>'))\""
+      ;;
+    InvalidTOML)
+      echo "🔍 $(t L_DIAG_TOML_TITLE)"
+      echo; echo "$(t L_DIAG_TOML_DESC)"
+      echo; echo "$REC:"; echo "→ python3 -c \"import tomllib; tomllib.load(open('<file.toml>','rb'))\""
+      ;;
+    MakefileSpace)
+      echo "🔍 $(t L_DIAG_MAKEFILE_TITLE)"
+      echo; echo "$(t L_DIAG_MAKEFILE_DESC)"
+      echo; echo "$REC:"; echo "→ $(t L_DIAG_MAKEFILE_FIX)"
+      ;;
+    *)
+      ai_explain "$issue"
+      ;;
+  esac
 }
 
 _diag_offer_fix() {
@@ -172,124 +183,151 @@ _diag_offer_fix() {
     DpkgMissingFilesList|DpkgFileConflicts|DpkgStatusDB|\
     Python|NodeJS|Git|Storage)
       echo
-      read -rp "  $(t L_DIAG_OFFER_FIX) [y/n]: " ans
+      read -rp "$(t L_DIAG_OFFER_FIX) $(t L_PROMPT_YN): " ans
       if [[ "$ans" =~ ^[YyTt]$ ]]; then
         mkdir -p "$(dirname "$STATE_FILE")"
-        local tmp
-        tmp=$(grep -v "^${issue}=" "$STATE_FILE" 2>/dev/null || true)
-        echo "$tmp" > "$STATE_FILE"
+        { grep -v "^${issue}=" "$STATE_FILE" 2>/dev/null || true; } > "${STATE_FILE}.tmp"
+        mv "${STATE_FILE}.tmp" "$STATE_FILE"
         echo "${issue}=BROKEN" >> "$STATE_FILE"
         echo
         source "$TDOC_ROOT/core/fix.sh"
       else
-        echo
-        echo -e "  ${DIM}$(t L_DIAG_FIX_SKIPPED)${RESET}"
-        echo -e "  ${DIM}$(t L_DIAG_FIX_HINT): tdoc fix${RESET}"
+        echo; print_info "$(t L_DIAG_FIX_SKIPPED)"
+        print_info "$(t L_DIAG_FIX_HINT): tdoc fix"
       fi
       ;;
+    UnpinnedDep|UnrefFunc|UnrefModule|UndefCall|BrokenMdLink|\
+    Traceback|PythonSyntax|InvalidJSON|InvalidYAML|InvalidTOML|MakefileSpace)
+      echo
+      print_info "$(t L_DIAG_NO_AUTO_FIX)"
+      print_info "$(t L_DIAG_RUN_SCAN): tdoc repo-scan"
+      ;;
+    *)
+      echo; print_info "$(t L_DIAG_NO_AUTO_FIX)"
+      print_info "$(t L_DIAG_RUN_SCAN): tdoc scan"
+      ;;
   esac
+}
+
+_diag_process() {
+  local input="$1"
+  local -A _seen=()
+  local found_any=false
+
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    local lower
+    lower=$(echo "$line" | tr '[:upper:]' '[:lower:]' | tr -s ' ')
+    local issue
+    issue=$(_diag_match_line "$lower")
+    [[ "$issue" == "Unknown" ]] && continue
+    [[ -n "${_seen[$issue]:-}" ]] && continue
+    _seen["$issue"]=1
+    found_any=true
+
+    echo -e "${GREEN}✔ $(t L_DIAG_MATCHED): ${BOLD}${issue}${RESET}"
+    echo
+    echo -e "${CYAN}${BORDER}${RESET}"
+    echo
+    _diag_explain_repo "$issue"
+    _diag_offer_fix "$issue"
+    echo
+    echo -e "${CYAN}${BORDER}${RESET}"
+    echo
+  done <<< "$input"
+
+  if ! $found_any; then
+    echo -e "${YELLOW}⚠ $(t L_DIAG_NO_MATCH)${RESET}"
+    echo
+    print_info "$(t L_DIAG_NO_MATCH_HINT1)"
+    print_info "$(t L_DIAG_NO_MATCH_HINT2): tdoc scan"
+    print_info "$(t L_DIAG_NO_MATCH_HINT3): https://github.com/djunekz/tdoc/issues"
+    echo
+  fi
 }
 
 _diag_run() {
   _diag_header
 
-  local raw_input=""
-
-  if [[ "${1:-}" == "-f" && -n "${2:-}" ]]; then
-    local logfile="$2"
-    if [[ ! -f "$logfile" ]]; then
-      echo -e "${RED}✖ $(t L_DIAG_FILE_NOT_FOUND): $logfile${RESET}"
+  if [[ "${1:-}" == "-f" ]]; then
+    local file="${2:-}"
+    if [[ -z "$file" ]]; then
+      print_err "$(t L_DIAG_NO_FILE)"
+      print_info "Usage: tdoc diagnose -f <logfile>"
       exit 1
     fi
-    raw_input=$(cat "$logfile")
-    echo -e "${DIM}$(t L_DIAG_READ_FROM): ${logfile}${RESET}"
+    if [[ ! -f "$file" ]]; then
+      print_err "$(t L_DIAG_FILE_NOT_FOUND): $file"
+      exit 1
+    fi
+    echo -e "${BOLD}$(t L_DIAG_FROM_FILE): ${file}${RESET}"
     echo
-
-  elif [[ $# -gt 0 ]]; then
-    echo -e "${YELLOW}⚠ $(t L_DIAG_NO_ARGS)${RESET}"
-    echo -e "${DIM}$(t L_DIAG_NO_ARGS_HINT)${RESET}"
-    echo
-    raw_input=$(_diag_read_input)
-
-  else
-    raw_input=$(_diag_read_input)
+    spinner_start "$(t L_DIAG_ANALYZING)..."
+    sleep 0.3
+    spinner_stop
+    _diag_process "$(cat "$file")"
+    return
   fi
 
+  if [[ "${1:-}" == "--last" ]]; then
+    if [[ ! -f "$REPO_SCAN_STATE" || ! -s "$REPO_SCAN_STATE" ]]; then
+      print_err "$(t L_DIAG_NO_LAST_SCAN)"
+      print_info "$(t L_DIAG_RUN_SCAN): tdoc repo-scan"
+      exit 1
+    fi
+    echo -e "${BOLD}$(t L_DIAG_FROM_LAST_SCAN):${RESET}"
+    echo -e "  ${GRAY}$(cat "$REPO_SCAN_STATE" | head -5)${RESET}"
+    [[ $(wc -l < "$REPO_SCAN_STATE") -gt 5 ]] && \
+      echo -e "  ${GRAY}... (+$(($(wc -l < "$REPO_SCAN_STATE")-5)) more lines)${RESET}"
+    echo
+    spinner_start "$(t L_DIAG_ANALYZING)..."
+    sleep 0.3
+    spinner_stop
+    _diag_process "$(cat "$REPO_SCAN_STATE")"
+    return
+  fi
+
+  if [[ $# -gt 0 ]]; then
+    local raw_input="$*"
+    echo -e "${BOLD}$(t L_DIAG_INPUT_LABEL):${RESET}"
+    echo -e "  ${GRAY}\"${raw_input}\"${RESET}"
+    echo
+    spinner_start "$(t L_DIAG_ANALYZING)..."
+    sleep 0.3
+    spinner_stop
+    _diag_process "$raw_input"
+    return
+  fi
+
+  echo -e "${BOLD}$(t L_DIAG_PASTE_PROMPT)${RESET}"
+  echo -e "${GRAY}$(t L_DIAG_PASTE_HINT)${RESET}"
+  echo -e "${GRAY}$(t L_DIAG_PASTE_END)${RESET}"
   echo
 
-  if [[ -z "${raw_input// /}" ]]; then
-    echo -e "${RED}✖ $(t L_DIAG_EMPTY_INPUT)${RESET}"
+  local lines="" line
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && break
+    lines+="$line"$'\n'
+  done
+
+  if [[ -z "$lines" ]]; then
+    print_err "$(t L_DIAG_EMPTY_INPUT)"
     exit 1
   fi
 
+  echo
   echo -e "${BOLD}$(t L_DIAG_INPUT_LABEL):${RESET}"
-  echo "$raw_input" | head -5 | sed 's/^/  /' | while IFS= read -r l; do
-    echo -e "${DIM}${l}${RESET}"
+  local count; count=$(echo "$lines" | wc -l)
+  echo "$lines" | head -2 | while IFS= read -r l; do
+    echo -e "  ${GRAY}$l${RESET}"
   done
-  local total_lines
-  total_lines=$(echo "$raw_input" | wc -l)
-  [[ $total_lines -gt 5 ]] && \
-    echo -e "  ${DIM}... (+$((total_lines - 5)) $(t L_DIAG_MORE_LINES))${RESET}"
+  [[ $count -gt 2 ]] && echo -e "  ${GRAY}... (+$((count-2)) more lines)${RESET}"
   echo
 
-  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-  echo
-
-  if _diag_check_ai; then
-    _DIAG_AI_AVAILABLE=true
-    spinner_start "$(t L_DIAG_AI_ANALYZING)..."
-
-    local ai_result
-    if ai_result=$(_diag_ai_analyze "$raw_input" 2>/dev/null); then
-      spinner_stop
-      echo -e "${GREEN}✔ $(t L_DIAG_AI_RESULT)${RESET}"
-      echo
-
-      while IFS= read -r line; do
-        case "$line" in
-          "🔍 DIAGNOSIS"*)  echo -e "${CYAN}${BOLD}${line}${RESET}" ;;
-          "ROOT CAUSE"*) echo -e "${YELLOW}${BOLD}${line}${RESET}" ;;
-          "HOW TO FIX"*) echo -e "${GREEN}${BOLD}${line}${RESET}" ;;
-          "PREVENTION"*) echo -e "${BLUE}${BOLD}${line}${RESET}" ;;
-          '```'*)           echo -e "${DIM}${line}${RESET}" ;;
-          *)                echo "  $line" ;;
-        esac
-      done <<< "$ai_result"
-
-    else
-      spinner_stop
-      echo -e "${YELLOW}⚠ $(t L_DIAG_AI_FAILED) — $(t L_DIAG_FALLBACK)${RESET}"
-      echo
-      _DIAG_AI_AVAILABLE=false
-    fi
-  fi
-
-  if [[ "$_DIAG_AI_AVAILABLE" == false ]]; then
-    spinner_start "$(t L_DIAG_ANALYZING)..."
-    sleep 0.3
-    local input_lower
-    input_lower=$(echo "$raw_input" | tr '[:upper:]' '[:lower:]' | tr -s ' ')
-    local issue
-    issue=$(_diag_match_static "$input_lower")
-    spinner_stop
-
-    if [[ "$issue" == "Unknown" ]]; then
-      echo -e "${YELLOW}⚠ $(t L_DIAG_NO_MATCH)${RESET}"
-      echo
-      echo -e "  ${DIM}$(t L_DIAG_NO_MATCH_HINT1)${RESET}"
-      echo -e "  ${DIM}$(t L_DIAG_NO_MATCH_HINT2): tdoc scan${RESET}"
-      echo -e "  ${DIM}$(t L_DIAG_NO_MATCH_HINT3): https://github.com/djunekz/tdoc/issues${RESET}"
-    else
-      echo -e "${GREEN}✔ $(t L_DIAG_MATCHED): ${BOLD}${issue}${RESET}"
-      echo
-      ai_explain "$issue"
-      _diag_offer_fix "$issue"
-    fi
-  fi
-
-  echo
-  echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-  echo
+  spinner_start "$(t L_DIAG_ANALYZING)..."
+  sleep 0.3
+  spinner_stop
+  _diag_process "$lines"
 }
 
 _diag_run "$@"
