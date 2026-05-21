@@ -228,7 +228,7 @@ done < <(find "$TARGET" -type f \( -name "*.sh" -o -name "*.bash" \) \
   ! -path "*/.git/*" 2>/dev/null)
 
 for fname in "${!_def_funcs[@]}"; do
-  src="$(_def_funcs[$fname])"
+  src="${_def_funcs[$fname]}"
   calls=$(grep -r --include="*.sh" --include="*.bash" --include="tdoc" \
     -l "\\b${fname}\\b" "$TARGET" 2>/dev/null | grep -cv "^${src}$" || echo 0)
   if [[ "$calls" -eq 0 ]]; then
