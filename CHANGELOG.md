@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.2.4] — 2026-06-16
+
+### Added
+- **`lang/fr.sh`** — New language: French
+
+### Fixed
+- **`core/explain.sh`** — Fix unbound variable STATE_FILE
+
+---
+
 ## [2.2.2] — 2026-05-27
 
 ### Added
