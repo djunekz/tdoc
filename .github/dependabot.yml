@@ -7,9 +7,6 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Jakarta"
-    labels:
-      - "dependencies"
-      - "github-actions"
     commit-message:
       prefix: "ci"
     reviewers:
