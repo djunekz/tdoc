@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "script.py", line 3, in <module>
+    raise ValueError("bad input")
+ValueError: bad input

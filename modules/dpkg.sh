@@ -36,12 +36,36 @@ _dpkg_write_state() {
   echo "${key}=${value}" >> "$STATE_FILE"
 }
 
+_tdoc_dpkg_lock_held() {
+  # Returns 0 if some live process still holds the lock, 1 otherwise.
+  # Presence of the lock file alone means nothing: dpkg/apt leave it on
+  # disk after a normal, successful run too.
+  local lockfile="$1"
+
+  if command -v fuser >/dev/null 2>&1; then
+    fuser "$lockfile" >/dev/null 2>&1 && return 0
+    return 1
+  fi
+
+  # fuser isn't installed by default in Termux (needs the psmisc package).
+  # Falling back to "not found -> stale" is wrong and causes constant false
+  # positives. Instead, fall back to checking for a live apt/dpkg process.
+  if command -v pgrep >/dev/null 2>&1; then
+    pgrep -x 'apt|apt-get|dpkg|apt-get.real|apt.real' >/dev/null 2>&1 && return 0
+    return 1
+  fi
+
+  # No way to reliably tell: don't guess "stale", that's worse than a
+  # missed detection.
+  return 0
+}
+
 check_dpkg_lock() {
   local stale=false
 
   for lockfile in "$DPKG_LOCK" "$DPKG_LOCK_FRONTEND"; do
     [[ -f "$lockfile" ]] || continue
-    if ! fuser "$lockfile" >/dev/null 2>&1; then
+    if ! _tdoc_dpkg_lock_held "$lockfile"; then
       stale=true
       break
     fi

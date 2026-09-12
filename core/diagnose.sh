@@ -14,6 +14,7 @@
 source "$TDOC_ROOT/core/ui.sh"
 source "$TDOC_ROOT/core/i18n.sh"
 source "$TDOC_ROOT/core/ai_explain.sh"
+source "$TDOC_ROOT/core/diagnose_engine.sh"
 load_lang
 
 STATE_FILE="${PREFIX}/var/lib/tdoc/state.env"
@@ -29,66 +30,39 @@ _diag_header() {
   echo
 }
 
-_diag_match_line() {
-  local s="$1"
+_diag_process() {
+  local input="$1"
+  local found_any=false
 
-  # ── repo-scan specific ──────────────────────────────────────────────────────
-  echo "$s" | grep -qiE "unpinned depend|consider pinning|unpinned.*requirements|unpinned.*package\.json" \
-    && echo "UnpinnedDep" && return
-  echo "$s" | grep -qiE "unreferenced.*function|defined.*never called|unref.*func" \
-    && echo "UnrefFunc" && return
-  echo "$s" | grep -qiE "unreferenced.*module|never sourced|unref.*module" \
-    && echo "UnrefModule" && return
-  echo "$s" | grep -qiE "undefined.*call|called.*never defined|undef.*call" \
-    && echo "UndefCall" && return
-  echo "$s" | grep -qiE "broken.*link|\.md.*broken link" \
-    && echo "BrokenMdLink" && return
-  echo "$s" | grep -qiE "traceback|error:|exception:|fatal|segmentation fault" \
-    && echo "Traceback" && return
-  echo "$s" | grep -qiE "invalid json" \
-    && echo "InvalidJSON" && return
-  echo "$s" | grep -qiE "invalid yaml|yaml.*error|mapping.*values.*not allowed" \
-    && echo "InvalidYAML" && return
-  echo "$s" | grep -qiE "invalid toml" \
-    && echo "InvalidTOML" && return
-  echo "$s" | grep -qiE "syntaxerror|indentationerror|syntax.*error.*\.py|\.py.*line [0-9]" \
-    && echo "PythonSyntax" && return
-  echo "$s" | grep -qiE "makefile.*space|recipe.*separator|missing separator" \
-    && echo "MakefileSpace" && return
+  while IFS=$'\t' read -r issue weight; do
+    [[ -z "$issue" ]] && continue
+    found_any=true
 
-  # ── dpkg / apt ──────────────────────────────────────────────────────────────
-  echo "$s" | grep -qiE "dpkg was interrupted|you must manually run.*dpkg|run.*dpkg.*--configure" \
-    && echo "DpkgHalfInstalled" && return
-  echo "$s" | grep -qiE "sub-process.*dpkg.*returned error|sub-process.*usr/bin/dpkg|dpkg returned error code" \
-    && echo "DpkgHalfInstalled" && return
-  echo "$s" | grep -qiE "unable to lock|could not get lock|lock.*var/lib/dpkg|another process.*using" \
-    && echo "DpkgLock" && return
-  echo "$s" | grep -qiE "half-installed|half-configured" \
-    && echo "DpkgHalfInstalled" && return
-  echo "$s" | grep -qiE "reinst-required|reinstallation required|ghost package" \
-    && echo "DpkgReinstRequired" && return
-  echo "$s" | grep -qiE "warning.*files list.*missing|files list file.*for package" \
-    && echo "DpkgMissingFilesList" && return
-  echo "$s" | grep -qiE "dpkg.*status.*corrupt|status.*database.*corrupt|cannot open.*dpkg/status" \
-    && echo "DpkgStatusDB" && return
-  echo "$s" | grep -qiE "unmet dep|dependency problems|broken packages|has unmet dep|apt-get install -f" \
-    && echo "DpkgBrokenDeps" && return
-  echo "$s" | grep -qiE "trying to overwrite|conflicts with.*package|file.*owned by" \
-    && echo "DpkgFileConflicts" && return
+    if (( weight <= DIAG_LOW_CONFIDENCE_WEIGHT )); then
+      echo -e "${YELLOW}~ $(t L_DIAG_MATCHED) (low confidence): ${BOLD}${issue}${RESET}"
+      echo -e "${GRAY}  Only a generic marker was found — no specific rule matched this log.${RESET}"
+      echo -e "${GRAY}  Treat this as a hint, not a diagnosis. More log context may narrow it down.${RESET}"
+    else
+      echo -e "${GREEN}✔ $(t L_DIAG_MATCHED): ${BOLD}${issue}${RESET}"
+    fi
+    echo
+    echo -e "${CYAN}${BORDER}${RESET}"
+    echo
+    _diag_explain_repo "$issue"
+    _diag_offer_fix "$issue"
+    echo
+    echo -e "${CYAN}${BORDER}${RESET}"
+    echo
+  done < <(diag_classify_block "$input")
 
-  # ── tools ───────────────────────────────────────────────────────────────────
-  echo "$s" | grep -qiE "python.*command not found|python3.*not found|no module named|modulenotfounderror|importerror" \
-    && echo "Python" && return
-  echo "$s" | grep -qiE "node.*command not found|nodejs.*not found|npm.*not found|cannot find module" \
-    && echo "NodeJS" && return
-  echo "$s" | grep -qiE "git.*command not found|git.*not found|not a git repo|fatal.*not a git" \
-    && echo "Git" && return
-  echo "$s" | grep -qiE "permission denied.*storage|cannot.*write.*storage|termux-setup-storage" \
-    && echo "Storage" && return
-  echo "$s" | grep -qiE "failed to fetch|could not resolve.*mirrors|404.*not found.*repo|gpg error|sources\.list" \
-    && echo "Repository" && return
-
-  echo "Unknown"
+  if ! $found_any; then
+    echo -e "${YELLOW}⚠ $(t L_DIAG_NO_MATCH)${RESET}"
+    echo
+    print_info "$(t L_DIAG_NO_MATCH_HINT1)"
+    print_info "$(t L_DIAG_NO_MATCH_HINT2): tdoc scan"
+    print_info "$(t L_DIAG_NO_MATCH_HINT3): https://github.com/djunekz/tdoc/issues"
+    echo
+  fi
 }
 
 _diag_explain_repo() {
@@ -145,6 +119,24 @@ _diag_explain_repo() {
       echo; echo "$(t L_DIAG_TRACEBACK_DESC)"
       echo; echo "$REC:"; echo "→ $(t L_DIAG_TRACEBACK_FIX)"
       ;;
+    RustToolchain)
+      echo "🔍 Missing Rust Compiler"
+      echo; echo "This package needs to compile native Rust code (e.g. via maturin/setuptools-rust), but no Rust toolchain is installed in Termux."
+      echo; echo "$CAUSES:"
+      echo "• The 'rust' package is not installed in Termux"
+      echo "• The Python package has no prebuilt wheel for Android/Termux's architecture, so pip falls back to building from source"
+      echo; echo "$REC:"
+      echo "→ pkg install rust"
+      echo "→ then retry: pip install <package>"
+      echo "→ or, if available, try: pip install --only-binary :all: <package>"
+      ;;
+    MissingCompiler)
+      echo "🔍 Missing C/C++ Build Toolchain"
+      echo; echo "The Python package needs to compile a native C/C++ extension, but a compiler wasn't found or the build failed."
+      echo; echo "$REC:"
+      echo "→ pkg install clang make"
+      echo "→ then retry the failed pip/npm install"
+      ;;
     PythonSyntax)
       echo "🔍 $(t L_DIAG_PY_SYNTAX_TITLE)"
       echo; echo "$(t L_DIAG_PY_SYNTAX_DESC)"
@@ -197,7 +189,8 @@ _diag_offer_fix() {
       fi
       ;;
     UnpinnedDep|UnrefFunc|UnrefModule|UndefCall|BrokenMdLink|\
-    Traceback|PythonSyntax|InvalidJSON|InvalidYAML|InvalidTOML|MakefileSpace)
+    Traceback|PythonSyntax|InvalidJSON|InvalidYAML|InvalidTOML|MakefileSpace|\
+    RustToolchain|MissingCompiler)
       echo
       print_info "$(t L_DIAG_NO_AUTO_FIX)"
       print_info "$(t L_DIAG_RUN_SCAN): tdoc repo-scan"
@@ -207,43 +200,6 @@ _diag_offer_fix() {
       print_info "$(t L_DIAG_RUN_SCAN): tdoc scan"
       ;;
   esac
-}
-
-_diag_process() {
-  local input="$1"
-  local -A _seen=()
-  local found_any=false
-
-  while IFS= read -r line; do
-    [[ -z "$line" ]] && continue
-    local lower
-    lower=$(echo "$line" | tr '[:upper:]' '[:lower:]' | tr -s ' ')
-    local issue
-    issue=$(_diag_match_line "$lower")
-    [[ "$issue" == "Unknown" ]] && continue
-    [[ -n "${_seen[$issue]:-}" ]] && continue
-    _seen["$issue"]=1
-    found_any=true
-
-    echo -e "${GREEN}✔ $(t L_DIAG_MATCHED): ${BOLD}${issue}${RESET}"
-    echo
-    echo -e "${CYAN}${BORDER}${RESET}"
-    echo
-    _diag_explain_repo "$issue"
-    _diag_offer_fix "$issue"
-    echo
-    echo -e "${CYAN}${BORDER}${RESET}"
-    echo
-  done <<< "$input"
-
-  if ! $found_any; then
-    echo -e "${YELLOW}⚠ $(t L_DIAG_NO_MATCH)${RESET}"
-    echo
-    print_info "$(t L_DIAG_NO_MATCH_HINT1)"
-    print_info "$(t L_DIAG_NO_MATCH_HINT2): tdoc scan"
-    print_info "$(t L_DIAG_NO_MATCH_HINT3): https://github.com/djunekz/tdoc/issues"
-    echo
-  fi
 }
 
 _diag_run() {

@@ -1,0 +1,2 @@
+dpkg: error processing package termux-tools (--configure):
+dpkg was interrupted, you must manually run 'dpkg --configure -a' to correct the problem.

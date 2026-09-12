@@ -34,7 +34,10 @@ else
   echo "Repository=BROKEN" >> "$STATE_FILE"; print_err "$(t L_SCAN_REPO)"
 fi
 
+source "$TDOC_ROOT/modules/storage.sh"
 if [[ -d "$HOME/storage/shared" && -w "$HOME/storage/shared" ]]; then
+  echo "Storage=OK" >> "$STATE_FILE"; print_ok "$(t L_SCAN_STORAGE)"
+elif _tdoc_storage_direct_ok; then
   echo "Storage=OK" >> "$STATE_FILE"; print_ok "$(t L_SCAN_STORAGE)"
 elif [[ -d "$HOME/storage" ]]; then
   echo "Storage=PARTIAL" >> "$STATE_FILE"; print_warn "$(t L_SCAN_STORAGE_PARTIAL)"

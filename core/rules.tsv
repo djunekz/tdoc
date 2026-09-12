@@ -1,0 +1,50 @@
+# TDOC diagnose rules
+# format: id<TAB>context<TAB>extended-regex-pattern<TAB>weight
+#
+# context: "any" = applies regardless of detected log source.
+#          otherwise one of: pip, npm, dpkg, apt, git, python, node
+#          (must match a context produced by _diag_detect_contexts)
+#
+# weight: higher = more specific / more trustworthy match.
+#   1-2  generic catch-alls (only ever win if nothing else matched)
+#   5-6  tool-presence checks (command not found, etc.)
+#   7-8  specific state signatures (dpkg status strings, etc.)
+#   9+   very specific, unambiguous phrasing
+#
+# Adding a new rule never needs to worry about position in this file:
+# ranking is purely by weight + context match, not by line order.
+
+UnpinnedDep	any	unpinned depend|consider pinning|unpinned.*requirements|unpinned.*package\.json	6
+UnrefFunc	any	unreferenced.*function|defined.*never called|unref.*func	6
+UnrefModule	any	unreferenced.*module|never sourced|unref.*module	6
+UndefCall	any	undefined.*call|called.*never defined|undef.*call	6
+BrokenMdLink	any	broken.*link|\.md.*broken link	6
+InvalidJSON	any	invalid json	6
+InvalidYAML	any	invalid yaml|yaml.*error|mapping.*values.*not allowed	6
+InvalidTOML	any	invalid toml	6
+PythonSyntax	python	syntaxerror|indentationerror|syntax.*error.*\.py	7
+MakefileSpace	any	makefile.*space|recipe.*separator|missing separator	7
+
+DpkgHalfInstalled	dpkg	dpkg was interrupted|you must manually run.*dpkg|run.*dpkg.*--configure	8
+DpkgHalfInstalled	dpkg	sub-process.*dpkg.*returned error|sub-process.*usr/bin/dpkg|dpkg returned error code	8
+DpkgHalfInstalled	dpkg	half-installed|half-configured	7
+DpkgLock	dpkg	unable to lock|could not get lock|lock.*var/lib/dpkg|another process.*using	8
+DpkgReinstRequired	dpkg	reinst-required|reinstallation required|ghost package	8
+DpkgMissingFilesList	dpkg	warning.*files list.*missing|files list file.*for package	8
+DpkgStatusDB	dpkg	dpkg.*status.*corrupt|status.*database.*corrupt|cannot open.*dpkg/status	8
+DpkgBrokenDeps	apt	unmet dep|dependency problems|broken packages|has unmet dep|apt-get install -f	7
+DpkgFileConflicts	dpkg	trying to overwrite|conflicts with.*package|file.*owned by	7
+
+Python	any	python.*command not found|python3.*not found|no module named|modulenotfounderror|importerror	6
+NodeJS	any	node.*command not found|nodejs.*not found|npm.*not found|cannot find module	6
+Git	any	git.*command not found|git.*not found|not a git repo|fatal.*not a git	6
+Storage	any	permission denied.*storage|cannot.*write.*storage|termux-setup-storage	6
+Repository	apt	failed to fetch|could not resolve.*mirrors|404.*not found.*repo|gpg error|sources\.list	6
+RustToolchain	pip	rust compiler|cargo, the rust package manager|rustc.*not found|no rust compiler|maturin.*failed|cargo.*not installed	9
+MissingCompiler	pip	clang.*not found|gcc.*not found|command 'gcc' failed|error: command '.*gcc'|building wheel.*failed	7
+
+# Generic catch-all: lowest weight on purpose. It will only ever "win" if
+# no specific rule above also matched. This is the fix for the bug where
+# a pip/maturin build failure got misdiagnosed as a bare "Traceback" just
+# because its output happened to contain the literal text "error:".
+Traceback	any	traceback|error:|exception:|fatal|segmentation fault	1

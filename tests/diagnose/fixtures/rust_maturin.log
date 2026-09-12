@@ -1,0 +1,6 @@
+Collecting maturin
+  Downloading maturin-1.15.0.tar.gz (385 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... error
+  error: subprocess-exited-with-error
+  Cargo, the Rust package manager, is not installed or is not on PATH.

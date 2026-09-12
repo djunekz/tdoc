@@ -1,0 +1,4 @@
+  File "script.py", line 2
+    def foo(
+             ^
+SyntaxError: unexpected EOF while parsing
