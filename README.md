@@ -242,6 +242,24 @@ No changes to core files needed.
 
 ---
 
+## Diagnose Engine
+
+`tdoc diagnose` matches pasted error output (or `tdoc diagnose -f <file>`) against a rule set to identify a known issue and suggest a fix. As of v2.3.0 the rules are data, not shell logic:
+
+- **`core/rules.tsv`** — one rule per line: `id<TAB>context<TAB>ere_pattern<TAB>weight`.
+  - `context` is `any`, or one of `pip`, `npm`, `dpkg`, `apt`, `git`, `python`, `node` — the tool the log is auto-detected to be from. A rule is only considered if its context matches (or is `any`), so a dpkg-specific pattern can't accidentally fire on pip output.
+  - `weight` is how specific/trustworthy the pattern is (1–2 generic, 9+ very specific). The highest-weight match wins — no need to worry about where in the file you add a new rule.
+- **`core/diagnose_engine.sh`** — the pure matching logic (context detection + ranking), with no UI dependency, so it's directly unit-testable.
+- **`tests/diagnose/`** — golden tests. To add a regression test for a bug report: drop the raw log into `tests/diagnose/fixtures/<name>.log`, put the expected issue id in `tests/diagnose/fixtures/<name>.expected`, then run:
+  ```bash
+  bash tests/diagnose/run_tests.sh
+  ```
+  This also runs in CI on every push/PR.
+
+To add a new diagnosable error: add a line to `rules.tsv`, add an explanation case in `_diag_explain_repo()` in `core/diagnose.sh`, and add a fixture + expected file so the match is covered by CI going forward.
+
+---
+
 ## Security Model
 
 TDOC is designed to be safe by default:

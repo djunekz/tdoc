@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.3.0] — 2026-09-14
+
+### Added
+- **`core/rules.tsv`** — All `tdoc diagnose` rules are now data instead of an if/elif cascade in shell: `id<TAB>context<TAB>ere_pattern<TAB>weight`. Adding or editing a rule no longer risks changing match priority just because of where it sits in a file.
+- **`core/diagnose_engine.sh`** — New pure rule-matching engine, decoupled from `ui.sh`/`i18n.sh` so it can be unit tested directly:
+  - **Context detection** — guesses which tool produced a log (`pip`, `npm`, `dpkg`, `apt`, `git`, `python`, `node`) from strong textual markers, and gates rules by context so e.g. a dpkg-specific pattern can no longer fire on pip output just because both contain the word "error".
+  - **Weighted ranking** — every rule carries a specificity weight; the highest-weight match wins per line. The generic catch-all (`Traceback`, matched by bare `error:`/`fatal`/etc.) is now weight `1`, the lowest possible, so it can never outrank a specific rule — regardless of source order.
+  - **Block-level suppression** — if any line in a pasted log produces a specific match, low-confidence generic matches found elsewhere in the same block are dropped instead of being reported as a separate "issue".
+  - **Low-confidence labeling** — when *only* the generic catch-all matches (no specific rule fired), `tdoc diagnose` now shows "Diagnosis matched (low confidence)" with a hedge instead of a confident ✔, and says so plainly rather than presenting a guess as a certainty.
+- **`RustToolchain`** and **`MissingCompiler`** diagnose rules — detects pip/maturin build failures caused by a missing Rust compiler (`cargo`/`rustc` not found) or missing C/C++ toolchain (`gcc`/`clang` not found), with a direct `pkg install rust` / `pkg install clang make` recommendation. Previously these were misdiagnosed as a generic "Traceback" because the generic pattern was checked before any tool-specific one.
+- **`tests/diagnose/`** — Golden test suite for the diagnose engine: 7 fixture logs (`fixtures/*.log` + `*.expected`) covering dpkg, apt, Python syntax vs. runtime errors, Node.js, and the Rust/maturin case above, plus `run_tests.sh` harness.
+- **CI: `diagnose-engine` job** — runs `tests/diagnose/run_tests.sh` on every push/PR so a future rule change that breaks an existing diagnosis is caught automatically instead of being found by a user.
+- **`modules/storage.sh` — `_tdoc_storage_direct_ok()`** — storage check now also accepts direct access via `/storage/emulated/0` or `/sdcard` as `OK`, for users who intentionally remove the `~/storage` convenience symlink but still have working storage access.
+
+### Fixed
+- **`modules/storage.sh`, `core/scan.sh` — false "Storage Access" failure**: both only checked for `$HOME/storage/shared`. A user without that symlink (but with working direct storage access) was incorrectly reported as `BROKEN`. `core/scan.sh` also duplicated this check inline instead of reusing the module; it now sources `modules/storage.sh` and shares the same logic.
+- **`modules/dpkg.sh` — false "stale dpkg lock" report**: `check_dpkg_lock` relied on `fuser` to tell whether the lock file was actually held. `fuser` is **not installed by default in Termux** (needs the separate `psmisc` package); when the command was missing, its non-zero exit was misread as "nothing holds the lock" and the file's mere presence — which dpkg/apt leave behind after every normal run — was always reported as `STALE`. Now falls back to a `pgrep`-based liveness check for `apt`/`dpkg` processes when `fuser` is unavailable, and never guesses "stale" when neither tool is present.
+- **`core/rules.tsv` (`PythonSyntax`)** — pattern `\.py.*line [0-9]` was broad enough to match *any* Python traceback that mentions a file and line number, not just actual syntax errors, misclassifying ordinary runtime exceptions (e.g. `ValueError`) as syntax errors. Narrowed to require an explicit `SyntaxError`/`IndentationError` marker.
+
+---
+
 ## [2.2.4] — 2026-06-16
 
 ### Added
