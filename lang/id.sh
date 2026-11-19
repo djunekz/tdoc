@@ -507,6 +507,8 @@ L_REPO_FIX_TOML_HINT="Perbaiki error sintaks TOML secara manual di"
 L_REPO_FIX_TRACEBACK_HINT="Tinjau file log untuk melihat error"
 L_REPO_FIX_DOCKER_HINT="Tambahkan instruksi FROM ke"
 L_REPO_FIX_TKEY_HINT="Tambahkan key lang yang hilang ke lang/en.sh dan lang/id.sh"
+L_REPO_FIX_UNSAFE_PATH="Dilewati — bukan file biasa di dalam repositori yang dipindai (jalankan ulang: tdoc repo-scan)"
+L_REPO_FIX_LANG_UNSAFE_VALUE="Key dilewati karena nilainya tidak aman (harus berupa string biasa dengan tanda kutip ganda)"
 
 # ── repo-scan (key baru) ──────────────────────────────────────────────────────
 L_REPO_SCAN_LANG_SYNC="Sinkronisasi Key File Bahasa (lang/)"

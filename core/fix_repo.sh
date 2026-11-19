@@ -12,6 +12,8 @@ source "$TDOC_ROOT/core/i18n.sh"
 load_lang
 
 REPO_FIX_STATE="${HOME}/.tdoc/repo_fix_state.env"
+REPO_SCAN_ROOT_FILE="${HOME}/.tdoc/repo_scan_root.txt"
+_RF_RE_DQ='^("([^"\\$`]|\\.)*")[[:space:]]*(#.*)?$'
 
 _rf_parse() {
   IFS='=' read -r RF_KEY rest <<< "$1"
@@ -21,6 +23,50 @@ _rf_parse() {
 _rf_confirm() {
   read -rp "$1 $(t L_PROMPT_YN): " ans
   [[ "$ans" =~ ^[YyTt]$ ]]
+}
+
+_rf_safe_file() {
+  local file="$1" root dir real_dir
+  [[ -n "$file" && -f "$file" && ! -L "$file" ]] || return 1
+  [[ -r "$REPO_SCAN_ROOT_FILE" ]] || return 1
+  IFS= read -r root < "$REPO_SCAN_ROOT_FILE" || return 1
+  root=$(cd "$root" 2>/dev/null && pwd -P) || return 1
+  dir=$(dirname -- "$file")
+  real_dir=$(cd "$dir" 2>/dev/null && pwd -P) || return 1
+  [[ "$real_dir" == "$root" || "$real_dir" == "$root"/* ]]
+}
+
+_rf_unsafe() {
+  print_warn "$(t L_REPO_FIX_UNSAFE_PATH): $1"
+  return 1
+}
+
+_rf_backup() {
+  local file="$1"
+  [[ -L "${file}.bak" ]] && rm -f -- "${file}.bak"
+  cp -- "$file" "${file}.bak"
+}
+
+_rf_lang_value() {
+  local line
+  line=$(grep -m1 -- "^$2=" "$1") || return 1
+  line="${line#*=}"
+  [[ "$line" =~ $_RF_RE_DQ ]] || return 1
+  printf '%s' "${BASH_REMATCH[1]}"
+}
+
+_rf_stub_block() {
+  local ref="$1" keys="$2" key val n=0
+  while IFS= read -r key; do
+    [[ -z "$key" ]] && continue
+    if val=$(_rf_lang_value "$ref" "$key"); then
+      echo "${key}=${val}  # [TRANSLATE]"
+      n=$((n+1))
+    else
+      print_warn "$(t L_REPO_FIX_LANG_UNSAFE_VALUE): $key" >&2
+    fi
+  done <<< "$keys"
+  [[ $n -gt 0 ]]
 }
 
 fix_repo_ShellSyntax() {
@@ -50,12 +96,13 @@ auto_fix_repo_PythonSyntax() { fix_repo_PythonSyntax "$1"; }
 
 fix_repo_InvalidJSON() {
   local file="$1"
-  [[ -z "$file" || ! -f "$file" ]] && return 1
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   local PY; PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)
   [[ -z "$PY" ]] && return 1
   print_info "$(t L_REPO_FIX_JSON_DETAIL):"
   "$PY" -m json.tool "$file" 2>&1 | head -5
   if _rf_confirm "$(t L_REPO_FIX_JSON_REFORMAT)"; then
+    _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
     local tmp; tmp=$(mktemp)
     if "$PY" -m json.tool "$file" > "$tmp" 2>/dev/null; then
       cp "$tmp" "$file"
@@ -72,7 +119,8 @@ fix_repo_InvalidJSON() {
 }
 
 auto_fix_repo_InvalidJSON() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   local PY; PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)
   local tmp; tmp=$(mktemp)
   if "$PY" -m json.tool "$file" > "$tmp" 2>/dev/null; then
@@ -84,11 +132,13 @@ auto_fix_repo_InvalidJSON() {
 
 fix_repo_UnpinnedDep() {
   local file="$1"
-  [[ -z "$file" || ! -f "$file" ]] && return 1
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   local PY; PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)
   print_info "$(t L_REPO_FIX_UNPINNED_INFO): $file"
   if [[ "$file" == *requirements* && -n "$PY" ]]; then
     if _rf_confirm "$(t L_REPO_FIX_UNPINNED_FREEZE)"; then
+      _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
+      [[ -L "${file}.pinned" ]] && rm -f -- "${file}.pinned"
       spinner_start "pip freeze..."
       if "$PY" -m pip freeze > "${file}.pinned" 2>/dev/null; then
         spinner_stop
@@ -104,11 +154,13 @@ fix_repo_UnpinnedDep() {
 }
 
 auto_fix_repo_UnpinnedDep() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   local PY; PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)
   [[ "$file" != *requirements* || -z "$PY" ]] && {
     print_warn "$(t L_REPO_FIX_UNPINNED_MANUAL)"; return 1
   }
+  [[ -L "${file}.pinned" ]] && rm -f -- "${file}.pinned"
   spinner_start "pip freeze..."
   if "$PY" -m pip freeze > "${file}.pinned" 2>/dev/null; then
     spinner_stop; print_ok "$(t L_REPO_FIX_UNPINNED_FROZEN): ${file}.pinned"
@@ -119,10 +171,10 @@ auto_fix_repo_UnpinnedDep() {
 
 fix_repo_LangKeyMissing() {
   local file="$1"
-  [[ -z "$file" || ! -f "$file" ]] && return 1
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   local target_dir; target_dir=$(dirname "$file")
   local ref="$target_dir/en.sh"
-  [[ ! -f "$ref" ]] && { print_warn "$(t L_REPO_FIX_LANG_NO_REF)"; return 1; }
+  _rf_safe_file "$ref" || { print_warn "$(t L_REPO_FIX_LANG_NO_REF)"; return 1; }
 
   print_info "$(t L_REPO_FIX_LANG_MISSING_INFO): $(basename "$file")"
   local REF_KEYS LF_KEYS
@@ -140,42 +192,40 @@ fix_repo_LangKeyMissing() {
   done
 
   if _rf_confirm "$(t L_REPO_FIX_LANG_STUB)"; then
+    local block
+    block=$(_rf_stub_block "$ref" "$missing_keys") || return 1
+    _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
     echo >> "$file"
     echo "# ── Auto-added stubs by tdoc repo-fix — translate these ──" >> "$file"
-    while IFS= read -r key; do
-      [[ -z "$key" ]] && continue
-      local val
-      val=$(grep "^${key}=" "$ref" | head -1 | cut -d= -f2-)
-      echo "${key}=${val}  # [TRANSLATE]" >> "$file"
-    done <<< "$missing_keys"
+    printf '%s\n' "$block" >> "$file"
     print_ok "$(t L_REPO_FIX_LANG_STUBBED): $(basename "$file")"
     print_warn "$(t L_REPO_FIX_LANG_TRANSLATE_HINT)"
   fi
 }
 
 auto_fix_repo_LangKeyMissing() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   local ref; ref="$(dirname "$file")/en.sh"
-  [[ ! -f "$ref" ]] && return 1
-  local REF_KEYS LF_KEYS missing_keys
+  _rf_safe_file "$ref" || return 1
+  local REF_KEYS LF_KEYS missing_keys block
   REF_KEYS=$(grep -oP '^L_\w+' "$ref" | sort)
   LF_KEYS=$(grep -oP '^L_\w+' "$file" | sort)
   missing_keys=$(comm -23 <(echo "$REF_KEYS") <(echo "$LF_KEYS"))
   [[ -z "$missing_keys" ]] && return 0
+  block=$(_rf_stub_block "$ref" "$missing_keys") || return 1
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   echo >> "$file"
   echo "# ── Auto-added stubs by tdoc repo-fix ──" >> "$file"
-  while IFS= read -r key; do
-    [[ -z "$key" ]] && continue
-    local val; val=$(grep "^${key}=" "$ref" | head -1 | cut -d= -f2-)
-    echo "${key}=${val}  # [TRANSLATE]" >> "$file"
-  done <<< "$missing_keys"
+  printf '%s\n' "$block" >> "$file"
   print_ok "$(t L_REPO_FIX_LANG_STUBBED): $(basename "$file")"
 }
 
 fix_repo_LangKeyOrphan() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   local ref; ref="$(dirname "$file")/en.sh"
-  [[ ! -f "$ref" ]] && return 1
+  _rf_safe_file "$ref" || return 1
   local REF_KEYS LF_KEYS orphans
   REF_KEYS=$(grep -oP '^L_\w+' "$ref" | sort)
   LF_KEYS=$(grep -oP '^L_\w+' "$file" | sort)
@@ -183,6 +233,7 @@ fix_repo_LangKeyOrphan() {
   [[ -z "$orphans" ]] && { print_ok "$(t L_REPO_FIX_LANG_INSYNC)"; return 0; }
   echo "$orphans" | while IFS= read -r key; do print_info "  orphan: $key"; done
   if _rf_confirm "$(t L_REPO_FIX_LANG_REMOVE_ORPHANS)"; then
+    _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
     while IFS= read -r key; do
       [[ -z "$key" ]] && continue
       sed -i "/^${key}=/d" "$file" 2>/dev/null || true
@@ -192,8 +243,10 @@ fix_repo_LangKeyOrphan() {
 }
 
 auto_fix_repo_LangKeyOrphan() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
-  local ref; ref="$(dirname "$file")/en.sh"; [[ ! -f "$ref" ]] && return 1
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
+  local ref; ref="$(dirname "$file")/en.sh"
+  _rf_safe_file "$ref" || return 1
   local orphans
   orphans=$(comm -13 \
     <(grep -oP '^L_\w+' "$ref" | sort) \
@@ -206,10 +259,12 @@ auto_fix_repo_LangKeyOrphan() {
 }
 
 fix_repo_MakefileSpace() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   print_info "$(t L_REPO_FIX_MAKEFILE_INFO): $file"
   if _rf_confirm "$(t L_REPO_FIX_MAKEFILE_CONVERT)"; then
-    cp "$file" "${file}.bak"
+    _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
+    _rf_backup "$file" || return 1
     sed -i 's/^    /\t/g' "$file"
     print_ok "$(t L_REPO_FIX_MAKEFILE_FIXED) ($(t L_REPO_FIX_BACKUP): ${file}.bak)"
     return 0
@@ -218,19 +273,22 @@ fix_repo_MakefileSpace() {
 }
 
 auto_fix_repo_MakefileSpace() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
-  cp "$file" "${file}.bak"
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
+  _rf_backup "$file" || return 1
   sed -i 's/^    /\t/g' "$file"
   print_ok "$(t L_REPO_FIX_MAKEFILE_FIXED): $file"
 }
 
 fix_repo_MissingSourceGuard() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
   print_info "$(t L_REPO_FIX_GUARD_INFO): $file"
   print_info "$(t L_REPO_FIX_GUARD_HINT)"
   print_info "  : \"\${TDOC_ROOT:?TDOC_ROOT is not set}\""
   if _rf_confirm "$(t L_REPO_FIX_GUARD_INSERT)"; then
-    cp "$file" "${file}.bak"
+    _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
+    _rf_backup "$file" || return 1
     sed -i '1{/^#!\/usr\/bin\/env bash/a \\n: "${TDOC_ROOT:?TDOC_ROOT is not set}"}' "$file"
     print_ok "$(t L_REPO_FIX_GUARD_INSERTED): $file"
     return 0
@@ -238,8 +296,9 @@ fix_repo_MissingSourceGuard() {
   return 1
 }
 auto_fix_repo_MissingSourceGuard() {
-  local file="$1"; [[ -z "$file" || ! -f "$file" ]] && return 1
-  cp "$file" "${file}.bak"
+  local file="$1"
+  _rf_safe_file "$file" || { _rf_unsafe "$file"; return 1; }
+  _rf_backup "$file" || return 1
   sed -i '1{/^#!\/usr\/bin\/env bash/a \\n: "${TDOC_ROOT:?TDOC_ROOT is not set}"}' "$file"
   print_ok "$(t L_REPO_FIX_GUARD_INSERTED): $file"
 }

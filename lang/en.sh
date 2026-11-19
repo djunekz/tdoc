@@ -507,6 +507,8 @@ L_REPO_FIX_TOML_HINT="Fix TOML syntax error manually in"
 L_REPO_FIX_TRACEBACK_HINT="Review log file for errors"
 L_REPO_FIX_DOCKER_HINT="Add a FROM instruction to"
 L_REPO_FIX_TKEY_HINT="Add missing lang key to lang/en.sh and lang/id.sh"
+L_REPO_FIX_UNSAFE_PATH="Skipped — not a regular file inside the scanned repository (re-run: tdoc repo-scan)"
+L_REPO_FIX_LANG_UNSAFE_VALUE="Skipped key with unsafe value (must be a plain double-quoted string)"
 
 # ── repo-scan (new keys) ──────────────────────────────────────────────────────
 L_REPO_SCAN_LANG_SYNC="Language File Key Sync (lang/)"

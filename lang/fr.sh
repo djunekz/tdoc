@@ -953,6 +953,8 @@ L_REPO_FIX_TRACEBACK_HINT="Examiner le fichier de journal pour les erreurs"
 L_REPO_FIX_DOCKER_HINT="Ajouter une instruction FROM à"
 # "Add missing lang key to lang/en.sh and lang/id.sh"
 L_REPO_FIX_TKEY_HINT="Ajouter la clé de langue manquante dans lang/en.sh et lang/id.sh"
+L_REPO_FIX_UNSAFE_PATH="Ignoré — ce n'est pas un fichier ordinaire du dépôt analysé (relancer : tdoc repo-scan)"
+L_REPO_FIX_LANG_UNSAFE_VALUE="Clé ignorée : valeur non sûre (doit être une chaîne simple entre guillemets doubles)"
 
 # ── repo-scan (new keys) ──────────────────────────────────────────────────────
 # "Language File Key Sync (lang/)"

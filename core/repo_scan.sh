@@ -24,14 +24,16 @@ load_lang
 
 TARGET="${1:-$PWD}"
 [[ ! -d "$TARGET" ]] && { print_err "$(t L_REPO_SCAN_NOT_DIR): $TARGET"; exit 1; }
-TARGET="$(cd "$TARGET" && pwd)"
+TARGET="$(cd "$TARGET" && pwd -P)"
 
 BORDER="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 REPO_SCAN_STATE="${HOME}/.tdoc/repo_scan_last.txt"
 REPO_FIX_STATE="${HOME}/.tdoc/repo_fix_state.env"
+REPO_SCAN_ROOT_FILE="${HOME}/.tdoc/repo_scan_root.txt"
 mkdir -p "$(dirname "$REPO_SCAN_STATE")"
 : > "$REPO_SCAN_STATE"
 : > "$REPO_FIX_STATE"
+printf '%s\n' "$TARGET" > "$REPO_SCAN_ROOT_FILE"
 
 _total_files=0; _broken=0; _warnings=0
 
@@ -150,9 +152,9 @@ $_found || _ok
 _section "$(t L_REPO_SCAN_LANG_SYNC)"
 _found=false
 LANG_DIR="$TARGET/lang"
-if [[ -d "$LANG_DIR" ]]; then
-  REF_LANG=""
-  [[ -f "$LANG_DIR/en.sh" ]] && REF_LANG="$LANG_DIR/en.sh"
+REF_LANG=""
+if [[ -d "$LANG_DIR" && ! -L "$LANG_DIR" ]]; then
+  [[ -f "$LANG_DIR/en.sh" && ! -L "$LANG_DIR/en.sh" ]] && REF_LANG="$LANG_DIR/en.sh"
   if [[ -n "$REF_LANG" ]]; then
     REF_KEYS=$(grep -oP '^L_\w+' "$REF_LANG" 2>/dev/null | sort)
     while IFS= read -r lf; do
@@ -171,7 +173,7 @@ if [[ -d "$LANG_DIR" ]]; then
           "lang/$lname: $(t L_REPO_SCAN_LANG_ORPHAN_KEY): $orphan" "$lf" ""
         _found=true
       done < <(comm -13 <(echo "$REF_KEYS") <(echo "$LF_KEYS"))
-    done < <(find "$LANG_DIR" -name "*.sh" 2>/dev/null)
+    done < <(find "$LANG_DIR" -type f -name "*.sh" 2>/dev/null)
   fi
 fi
 $_found || _ok
@@ -212,7 +214,7 @@ while IFS= read -r f; do
       "$f: $(t L_REPO_SCAN_NO_GUARD): PREFIX" "$f" "1"
     _found=true
   fi
-done < <(find "$TARGET/core" "$TARGET/modules" -name "*.sh" 2>/dev/null)
+done < <(find "$TARGET/core" "$TARGET/modules" -type f -name "*.sh" 2>/dev/null)
 $_found || _ok
 
 _section "$(t L_REPO_SCAN_UNREF_FUNCS)"
@@ -299,7 +301,7 @@ while IFS= read -r f; do
       "$f: $(t L_REPO_SCAN_DOCKER_NO_FROM)" "$f" ""
     _found=true
   }
-done < <(find "$TARGET" -name "Dockerfile*" ! -path "*/.git/*" 2>/dev/null)
+done < <(find "$TARGET" -type f -name "Dockerfile*" ! -path "*/.git/*" 2>/dev/null)
 $_found || _ok
 
 _section "$(t L_REPO_SCAN_REQUIREMENTS)"
@@ -316,7 +318,7 @@ while IFS= read -r f; do
       _found=true
     }
   done < "$f"
-done < <(find "$TARGET" -name "requirements*.txt" ! -path "*/.git/*" 2>/dev/null)
+done < <(find "$TARGET" -type f -name "requirements*.txt" ! -path "*/.git/*" 2>/dev/null)
 $_found || _ok
 
 _section "$(t L_REPO_SCAN_PACKAGEJSON)"
@@ -340,7 +342,7 @@ try:
 except Exception: pass
 PYEOF
 )
-  done < <(find "$TARGET" -name "package.json" \
+  done < <(find "$TARGET" -type f -name "package.json" \
     ! -path "*/node_modules/*" ! -path "*/.git/*" 2>/dev/null)
 fi
 $_found || _ok
@@ -354,7 +356,7 @@ while IFS= read -r f; do
       "$f: $(t L_REPO_SCAN_MAKEFILE_SPACES)" "$f" ""
     _found=true
   }
-done < <(find "$TARGET" -name "Makefile" ! -path "*/.git/*" 2>/dev/null)
+done < <(find "$TARGET" -type f -name "Makefile" ! -path "*/.git/*" 2>/dev/null)
 $_found || _ok
 
 _section "$(t L_REPO_SCAN_MARKDOWN) (.md)"
@@ -373,7 +375,7 @@ while IFS= read -r f; do
       _found=true
     }
   done < <(grep -oP '\]\(\K[^)]+(?=\))' "$f" 2>/dev/null)
-done < <(find "$TARGET" -name "*.md" ! -path "*/.git/*" 2>/dev/null)
+done < <(find "$TARGET" -type f -name "*.md" ! -path "*/.git/*" 2>/dev/null)
 $_found || _ok
 
 _section "$(t L_REPO_SCAN_LOGS) (.log .out .err)"

@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+---
+
+## [2.3.1] — 2026-11-19
+
+### Security
+- **`repo-scan` / `repo-fix`** — Symlinks inside a scanned repository could cause `repo-fix` to write attacker-controlled lines into files outside that repository. Scan now only considers regular files, fix handlers reject symlinks and paths outside the scanned repository, backup and `.pinned` outputs no longer write through pre-existing symlinks, and stub values copied from `en.sh` are limited to plain double-quoted strings. Thanks to Niranj R Mahaswar for the report.
+
+### Added
+- **`tests/repo_fix/`** — regression tests for the above, run in CI.
+
+### Fixed
+- **`core/repo_scan.sh`** — scan no longer crashes on repositories without a `lang/` directory.
+
+---
+
 ## [2.3.0] — 2026-09-14
 
 ### Added
